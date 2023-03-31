@@ -8,6 +8,8 @@ from packaging.version import Version as _Version
 
 
 class Version(_Version):
+    # pydnatic-compatible packaging.version.Version
+
     @classmethod
     def validate(cls, obj: str | Version) -> Version:
         if isinstance(obj, Version):
@@ -49,7 +51,7 @@ class ref(Generic[_T]):
     @overload
     def __call__(self, /, *, strict: Literal[False]) -> _T | None: ...
     def __call__(self, /, *, strict: bool = True) -> _T | None:
-        """The wrapped value."""
+        """The wrapped value (`weakref`-style access)."""
         val = self.inner
         if self.is_weak:
             val = cast(weakref.ref[_T], val)()
@@ -62,3 +64,7 @@ class ref(Generic[_T]):
         """Check if `self` is a weak reference."""
         return isinstance(self.inner, weakref.ref)
 
+
+__all__ = [
+    "Version", "ref",
+]
