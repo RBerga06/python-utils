@@ -1,2 +1,2 @@
-# python-utils
-Python Utilities
+# rberga06-utils (Python package)
+Python utilities
