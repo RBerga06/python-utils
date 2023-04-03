@@ -11,8 +11,7 @@ from pathlib import Path
 import sys
 from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar, Generic, Iterator, Self, TypeVar, overload
-from pydantic import Field
-from pydantic.generics import GenericModel
+from pydantic import BaseModel, Field
 
 from ..types import Version
 from ..imports import import_from
@@ -40,7 +39,7 @@ class _PlatformASTNodeTransformer(ast.NodeTransformer):
 _F = TypeVar("_F", bound=Features)
 
 
-class System(GenericModel, Generic[_F]):
+class System(BaseModel, Generic[_F]):
     """A plugin system."""
     name: str
     version: Version
@@ -153,7 +152,7 @@ class System(GenericModel, Generic[_F]):
                 else:
                     value = modulename
             features[name] = resolve_name(value)
-        plugin.features = self.Features.validate(features)
+        plugin.features = self.Features.model_validate(features)
         return plugin
 
 
@@ -161,7 +160,7 @@ if not TYPE_CHECKING:
     # Fix forward refs
     from . import dynamic
     setattr(dynamic, "System", System)
-    Plugin.update_forward_refs()
+    Plugin.model_rebuild(force=True)
 
 
 __all__ = [

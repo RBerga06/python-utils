@@ -5,23 +5,28 @@ from __future__ import annotations
 from typing import Generic, Literal, TypeVar, cast, overload
 import weakref
 from packaging.version import Version as _Version
+from pydantic import ValidationInfo
+from pydantic_core.core_schema import PlainValidatorFunctionSchema
 
 
 class Version(_Version):
-    # pydnatic-compatible packaging.version.Version
+    # pydantic(v2)-compatible packaging.version.Version
 
-    @classmethod
-    def validate(cls, obj: str | Version) -> Version:
+    @staticmethod
+    def validate(obj: str | Version, info: ValidationInfo, /) -> Version:
         if isinstance(obj, Version):
             return obj
         else:
-            return cls(obj)
+            return Version(obj)
 
-    @classmethod
-    def __get_validators__(cls):
-        """Pydantic compatibility."""
-        yield cls.validate
-
+    # See https://docs.pydantic.dev/blog/pydantic-v2/#changes-to-custom-field-types
+    __pydantic_core_schema__: PlainValidatorFunctionSchema = {
+        "type": "function-plain",
+        "function": {
+            "type": "general",
+            "function": validate,
+        },
+    }
 
 
 _T = TypeVar("_T")
@@ -42,10 +47,6 @@ class ref(Generic[_T]):
         """The wrapped value."""
         return self()
 
-    @classmethod
-    def __get_validators__(cls):
-        yield cls
-
     @overload
     def __call__(self, /, *, strict: Literal[True] = ...) -> _T: ...
     @overload
@@ -63,6 +64,22 @@ class ref(Generic[_T]):
     def is_weak(self) -> bool:
         """Check if `self` is a weak reference."""
         return isinstance(self.inner, weakref.ref)
+
+    @staticmethod
+    def validate(obj: ref[_T] | weakref.ref[_T] | _T, info: ValidationInfo, /) -> ref[_T]:
+        if isinstance(obj, ref):
+            return obj
+        else:
+            return ref(obj)
+
+    # See https://docs.pydantic.dev/blog/pydantic-v2/#changes-to-custom-field-types
+    __pydantic_core_schema__: PlainValidatorFunctionSchema = {
+        "type": "function-plain",
+        "function": {
+            "type": "general",
+            "function": validate,
+        },
+    }
 
 
 __all__ = [

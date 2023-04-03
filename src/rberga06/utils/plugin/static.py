@@ -30,7 +30,7 @@ class Static(BaseModel):
         """Read the info file at `root/.plugin.yml`."""
         data = yaml.load(file.read_text("utf-8"), yaml.SafeLoader)
         data["root"] = file.parent
-        return cls.validate(data)
+        return cls.model_validate(data)
 
 
 

@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 """Runtime / Dynamic plugin data."""
 from __future__ import annotations
-from typing import TYPE_CHECKING, Generic, Self, TypeVar, cast
-from pydantic import BaseModel
-from pydantic.generics import GenericModel
+from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar, cast
+from pydantic import BaseModel, ConfigDict
 from .static import Static
 
 if TYPE_CHECKING:
@@ -20,9 +19,9 @@ class Features(BaseModel):
 _F = TypeVar("_F", bound=Features)
 
 
-class Plugin(GenericModel, Generic[_F]):
+class Plugin(BaseModel, Generic[_F]):
     """A plugin."""
-    sys: System
+    sys: System[_F]
     static: Static
     features: _F | None = None  # by default, it's not loaded
 
@@ -40,6 +39,11 @@ class Plugin(GenericModel, Generic[_F]):
         if self.features is None:
             self.load()
         return cast(_F, self.features)
+
+    # Pydantic model configuration
+    model_config: ClassVar[ConfigDict] = {
+        "undefined_types_warning": False,
+    }
 
 
 __all__ = [
