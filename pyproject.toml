@@ -13,7 +13,7 @@ packages = [{include = "rberga06", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = "^1.10.7"
+pydantic = {version = "^2.0a1", allow-prereleases = true}
 packaging = "^23.0"
 pyyaml = "^6.0"
 
