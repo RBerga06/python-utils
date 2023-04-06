@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Generic, Iterator, Self, TypeVar, final, overl
 from pydantic import BaseModel, Field
 
 from ..types import Version
-from ..imports import absolutize_obj_name, import_from
+from ..imports import absolutize_obj_name, import_from, pythonize
 from .static import Static
 from .dynamic import Features, Plugin
 
@@ -143,7 +143,7 @@ class System(BaseModel, Generic[_F]):
         if plugin.features is not None:
             return plugin
         # Make sure the module has been imported
-        modulename = f"{self.package}.{plugin.static.info.name}"
+        modulename = f"{self.package}.{pythonize(plugin.static.info.name, ignore='.')}"
         if modulename not in sys.modules:
             sys.modules[modulename] = import_from(
                 plugin.static.root/plugin.static.lib,

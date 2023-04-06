@@ -82,6 +82,20 @@ def absolutize_obj_name(name: str, root: str) -> str:
     ]).removesuffix(":")
 
 
+_PYTHON_INVALID_CHARS = "-+*/\\!:@{}[]().?'\"\n\t "
+
+
+def pythonize(id: str, /, *, ignore: Iterable[str] = "") -> str:
+    """Return a valid Python identifier inspired by `name`."""
+    for char in {*_PYTHON_INVALID_CHARS} - {*ignore}:
+        id = id.replace(char, "_")
+    return id
+
+
 __all__ = [
+    "import_or_fake",
+    "fake_module",
     "import_from",
+    "absolutize_obj_name",
+    "pythonize",
 ]
