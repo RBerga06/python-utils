@@ -13,10 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: [ "ubuntu", "macos", "windows" ]
-        # python: [ "3.11", "3.12.0-alpha.7" ]
-        os: [ "ubuntu", "windows" ]
-        python: [ "3.11" ]
+        os: [ "ubuntu", "macos", "windows" ]
+        python: [ "3.11" ]  # python: [ "3.11", "3.12.0-alpha.7" ]
     runs-on: ${{ matrix.os }}-latest
     steps:
     - uses: actions/checkout@v3
