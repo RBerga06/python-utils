@@ -81,7 +81,8 @@ jobs:
       with:
         name: rberga06-utils-py${{ matrix.python }}-${{ matrix.os }}
         path: dist
-    - id: get_whl_filename
-      run: echo "::set-output name=file::$(ls build/*.whl)"
+    - id: ls
+      name: List filenames
+      run: echo "wheel=$(ls build/*.whl)" >> $GITHUB_OUTPUT
     - name: Install
-      run: pip install ${{ steps.get_whl_filename.outputs.file }}
+      run: pip install ${{ steps.ls.outputs.wheel }}
