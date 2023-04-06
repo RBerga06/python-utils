@@ -29,7 +29,7 @@ jobs:
     - name: Editable install
       run: poetry install --with=dev
     - name: Test
-      run: pytest
+      run: poetry run pytest
 
   # build
   build:
@@ -57,6 +57,7 @@ jobs:
 
   # install & test
   install:
+    needs: build
     strategy:
       fail-fast: false
       matrix:
