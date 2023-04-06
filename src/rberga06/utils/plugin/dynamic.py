@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar, cast
 from pydantic import BaseModel, ConfigDict
 from .static import Static
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     # Avoid circular imports
     from .system import System
 

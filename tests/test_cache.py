@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Test `rberga06.utils.cache`."""
+from __future__ import annotations
 from functools import wraps
 from typing import Callable, NamedTuple, TypeVar, cast
 

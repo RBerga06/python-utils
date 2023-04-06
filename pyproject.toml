@@ -2,11 +2,11 @@
 testpaths = [
     "tests",
 ]
-addopts = "--cov=rberga06.utils --cov-report html"
+addopts = "--cov=rberga06.utils --cov-report term --cov-report html"
 
 [tool.poetry]
 name = "rberga06-utils"
-version = "0.1.0"
+version = "0.0.1.dev0"
 description = ""
 authors = ["RBerga06 <78449715+RBerga06@users.noreply.github.com>"]
 readme = "README.md"
@@ -21,6 +21,7 @@ pyyaml = "^6.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.2"
 pytest-cov = "^4.0.0"
+pytest-order = "^1.1.0"
 
 [build-system]
 requires = ["poetry-core"]

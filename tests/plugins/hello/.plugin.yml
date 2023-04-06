@@ -1,0 +1,9 @@
+sys: rberga06.utils.<tests> v1.0.0
+info:
+  name: hello
+  author: rberga06
+  version: v0.0.1.dev0
+  description: Hello, World!
+lib: lib.py
+feat:
+  hello: .:hello
