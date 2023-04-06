@@ -1,0 +1,46 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python package
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu", "macos", "windows" ]
+        python-version: ["3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install pipx & poetry
+      run: |
+        pip install pipx
+        pipx ensurepath
+        pipx install poetry
+    - name: Check pyproject.toml
+      run: poetry check
+    - name: Build
+      run: poetry build
+    - name: Install (dev)
+      run: |
+        poetry install -E dev --no-root
+        pip install dist/*.whl
+    - name: Test
+      run: poetry run pytest
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: rberga06-utils-py${{ matrix.python-version }}-${{ matrix.os }}
+        path: dist/*
