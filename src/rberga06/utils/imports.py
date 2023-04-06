@@ -65,6 +65,23 @@ def import_from(path: Path, name: str, /, *, inject: dict[str, object] | None = 
     return module
 
 
+def absolutize_obj_name(name: str, root: str) -> str:
+    """Absolutize `name` relatively to `root`."""
+    # Example: ('.a:b',  'root') -> 'root.a:b'
+    #          ('.:b',   'root') -> 'root:b'
+    #          ('.a',    'root') -> 'root.a'
+    #          ('c.d:e', 'root') -> 'c.d:e'
+    if not name.startswith("."):
+        return name
+    if not ":" in name:
+        name = f"{name}:"
+    mod, obj = name.split(":")
+    return ":".join([
+        f"{root}{mod}".removesuffix("."),
+        obj,
+    ]).removesuffix(":")
+
+
 __all__ = [
     "import_from",
 ]

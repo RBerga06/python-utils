@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Generic, Iterator, Self, TypeVar, final, overl
 from pydantic import BaseModel, Field
 
 from ..types import Version
-from ..imports import import_from
+from ..imports import absolutize_obj_name, import_from
 from .static import Static
 from .dynamic import Features, Plugin
 
@@ -152,13 +152,7 @@ class System(BaseModel, Generic[_F]):
         # Resolve the specified feature paths
         features = dict[str, object]()
         for name, value in plugin.static.feat.items():
-            if value.startswith("."):
-                value = value[1:]  # Remove '.' prefix
-                if value:
-                    value = f"{modulename}.{value[1:]}"
-                else:
-                    value = modulename
-            features[name] = resolve_name(value)
+            features[name] = resolve_name(absolutize_obj_name(value, modulename))
         plugin.features = self.Features.model_validate(features)
         return plugin
 
