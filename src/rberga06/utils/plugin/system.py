@@ -10,28 +10,35 @@ from pkgutil import resolve_name
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing import TYPE_CHECKING, ClassVar, Generic, Iterator, Self, TypeVar, overload
+from typing import TYPE_CHECKING, Generic, Iterator, Self, TypeVar, final, overload
 from pydantic import BaseModel, Field
 
 from ..types import Version
-from ..imports import import_from
+from ..imports import absolutize_obj_name, import_from, pythonize
 from .static import Static
 from .dynamic import Features, Plugin
 
 
+def _platform_aliases(aliases: dict[str, set[str]]) -> set[str]:
+    platform = sys.platform.lower()
+    return {platform} | aliases.get(platform, aliases["__default__"])
+
+
+_PLATFORM_ALIASES: set[str] = _platform_aliases(dict(
+    #     str      --->      set[str]
+    # sys.platform |--> accepted aliases
+    darwin={"macos", "unix"},
+    __default__={"unix"},
+))
+
+
+@final
 class _PlatformASTNodeTransformer(ast.NodeTransformer):
     """AST node transformer for platform requirements."""
 
-    PLATFORM_ALIASES: ClassVar[set[str]] = (__PLATFORM_ALIASES := dict(
-        # sys.platform -> accepted aliases
-        darwin={"macos", "unix"},
-        __default__={"unix"},
-    )).get(sys.platform.lower(), __PLATFORM_ALIASES["__default__"]) | {sys.platform.lower()}
-    del __PLATFORM_ALIASES
-
     def visit_Name(self, node: ast.Name) -> ast.AST:
         return ast.copy_location(ast.Constant(
-            value=(node.id.lower() in self.PLATFORM_ALIASES),
+            value=(node.id.lower() in _PLATFORM_ALIASES),
             ctx=node.ctx
         ), node)
 
@@ -136,7 +143,7 @@ class System(BaseModel, Generic[_F]):
         if plugin.features is not None:
             return plugin
         # Make sure the module has been imported
-        modulename = f"{self.package}.{plugin.static.info.name}"
+        modulename = f"{self.package}.{pythonize(plugin.static.info.name, ignore='.')}"
         if modulename not in sys.modules:
             sys.modules[modulename] = import_from(
                 plugin.static.root/plugin.static.lib,
@@ -145,13 +152,7 @@ class System(BaseModel, Generic[_F]):
         # Resolve the specified feature paths
         features = dict[str, object]()
         for name, value in plugin.static.feat.items():
-            if value.startswith("."):
-                value = value[1:]  # Remove '.' prefix
-                if value:
-                    value = f"{modulename}.{value[1:]}"
-                else:
-                    value = modulename
-            features[name] = resolve_name(value)
+            features[name] = resolve_name(absolutize_obj_name(value, modulename))
         plugin.features = self.Features.model_validate(features)
         return plugin
 

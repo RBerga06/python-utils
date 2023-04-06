@@ -1,0 +1,9 @@
+sys: rberga06.utils.<tests> v100.0.0 on wrong-platform
+info:
+  name: err-compat
+  author: rberga06
+  version: v0.0.1.dev0
+  description: Will raise a compatibility error.
+lib: lib.py
+feat:
+  hello: .:hello
