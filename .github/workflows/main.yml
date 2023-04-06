@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ "ubuntu", "macos", "windows" ]
-        python: ["3.11", "3.12"]
+        python: [ "3.11", "3.12.0-alpha.7" ]
 
     runs-on: ${{ matrix.os }}-latest
 
@@ -33,7 +33,7 @@ jobs:
       run: poetry build
     - name: Install (dev)
       run: |
-        poetry install -E dev --no-root
+        poetry install --with=dev --no-root
         pip install dist/*.whl
     - name: Test
       run: poetry run pytest
