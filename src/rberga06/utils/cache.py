@@ -67,9 +67,9 @@ class cache(Generic[_T]):
         if cache.has(obj, strict=True):
             return obj.__cache__
         if isinstance(obj, property):
-            return cache.get(obj.fget)
+            return cache.get(obj.fget, strict=strict)
         if hasattr(obj, "__wrapped__"):
-            return cache.get(getattr(obj, "__wrapped__"))
+            return cache.get(getattr(obj, "__wrapped__"), strict=strict)
         if strict:
             raise ValueError(f"{obj!r} has no cache.")
         return None
