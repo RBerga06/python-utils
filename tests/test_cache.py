@@ -91,3 +91,11 @@ class TestCache:
         assert cache.read(factorial) is None
         assert cache.read(factorial_cached)
 
+    def test_clear(self):
+        cache().clear()
+        cache.clear(factorial)
+        cache.clear(factorial_cached)
+        cache.clear(Foo.foo)
+        assert cache.read(factorial_cached) is None
+        factorial_cached(10)
+        assert cache.read(factorial_cached) is not None

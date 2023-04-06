@@ -3,7 +3,7 @@
 """Useful caching utilities."""
 from __future__ import annotations
 from functools import wraps
-from typing import Callable, Generic, Literal, Protocol, Self, TypeGuard, TypeVar, cast, overload
+from typing import Callable, Generic, Literal, Protocol, Self, TypeGuard, TypeVar, cast, final, overload
 
 
 _T = TypeVar("_T")
@@ -15,6 +15,7 @@ class WithCache(Protocol[_T]):
     __cache__: cache[_T]
 
 
+@final
 class cache(Generic[_T]):
     """A cache."""
     __slots__ = ("_",)
@@ -67,7 +68,7 @@ class cache(Generic[_T]):
         if cache.has(obj, strict=True):
             return obj.__cache__
         if isinstance(obj, property):
-            return cache.get(obj.fget, strict=strict)
+            return cache.get(obj.fget, strict=strict)  # type: ignore
         if hasattr(obj, "__wrapped__"):
             return cache.get(getattr(obj, "__wrapped__"), strict=strict)
         if strict:
@@ -115,7 +116,9 @@ class cache(Generic[_T]):
         @self.set
         def inner(*args: object, **kwargs: object) -> object:
             frozen = (args, frozenset(kwargs.items()))
-            cached = self.read(strict=True)
+            cached = self.read()
+            if cached is None:
+                self._ = cached = {}
             if frozen in cached:
                 result, failed = cached[frozen]
                 if failed:
@@ -132,13 +135,6 @@ class cache(Generic[_T]):
         return cast(_F, inner)
 
 
-class GlobalInstance:
-    @classmethod
-    @cache.call
-    def instance(cls) -> Self:
-        return cls()
-
-
 CallCacheData = dict[
     tuple[
         tuple[object, ...],            # *args
@@ -151,4 +147,4 @@ CallCacheData = dict[
 ]
 
 
-__all__ = ["WithCache", "cache", "GlobalInstance", "CallCacheData"]
+__all__ = ["WithCache", "cache", "CallCacheData"]
