@@ -2,7 +2,7 @@
 testpaths = [
     "tests",
 ]
-addopts = "--cov=rberga06.utils --cov-report html"
+addopts = "--cov=rberga06.utils --cov-report term --cov-report html"
 
 [tool.poetry]
 name = "rberga06-utils"
