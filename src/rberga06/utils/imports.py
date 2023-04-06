@@ -49,10 +49,10 @@ def import_from(path: Path, name: str, /, *, inject: dict[str, object] | None = 
     if path.is_dir():
         return import_from(path/"__init__.py", name, inject=inject)
     spec = spec_from_file_location(name, path)
-    if spec is None:
+    if spec is None:  # pragma: no cover
         raise ImportError(name=name, path=str(path))
     module = module_from_spec(spec)
-    if spec.loader is None:
+    if spec.loader is None:  # pragma: no cover
         raise ImportError(name=name, path=str(path))
     sys.modules[spec.name] = module
     if "." in spec.name:
@@ -82,7 +82,7 @@ def absolutize_obj_name(name: str, root: str) -> str:
     ]).removesuffix(":")
 
 
-_PYTHON_INVALID_CHARS = "-+*/\\!:@{}[]().?'\"\n\t "
+_PYTHON_INVALID_CHARS = "-+*/\\!:@{}[]().?'\"\n\t #"
 
 
 def pythonize(id: str, /, *, ignore: Iterable[str] = "") -> str:
