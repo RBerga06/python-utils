@@ -1,0 +1,3 @@
+# Malformed .plugin.yml: will be ignored.
+info:
+  name: err-malformed

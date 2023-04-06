@@ -1,0 +1,9 @@
+sys: rberga06.utils.<tests> v1.0.0
+info:
+  name: hello-pkg
+  author: rberga06
+  version: v0.0.1.dev0
+  description: Hello, World! (but as a package)
+lib: __init__.py
+feat:
+  hello: .:hello
