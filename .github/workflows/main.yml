@@ -1,44 +1,73 @@
 name: Main workflow
 
 on:
-  push:
-    branches: [ "main" ]
+  workflow_dispatch:
+  # push:
+  #   branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
 jobs:
-  build:
+  # -e install & test
+  test:
     strategy:
       fail-fast: false
       matrix:
         os: [ "ubuntu", "macos", "windows" ]
         python: [ "3.11", "3.12.0-alpha.7" ]
-
     runs-on: ${{ matrix.os }}-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python }}
-    - name: Install pipx & poetry
-      run: |
-        pip install pipx
-        pipx ensurepath
-        pipx install poetry
+    - name: Install poetry
+      run: pip install poetry
     - name: Check pyproject.toml
       run: poetry check
+    - name: Editable install
+      run: poetry install --with=dev
+    - name: Test
+      run: pytest
+
+  # build
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu", "macos", "windows" ]
+        python: [ "3.11", "3.12.0-alpha.7" ]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install poetry
+      run: pip install poetry
     - name: Build
       run: poetry build
-    - name: Install (dev)
-      run: |
-        poetry install --with=dev --no-root
-        pip install dist/*.whl
-    - name: Test
-      run: poetry run pytest
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
         name: rberga06-utils-py${{ matrix.python }}-${{ matrix.os }}
         path: dist/*
+
+  # install & test
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ "ubuntu", "macos", "windows" ]
+        python: [ "3.11", "3.12.0-alpha.7" ]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install
+      run: pip install dist/*.whl
