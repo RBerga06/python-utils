@@ -49,10 +49,10 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python }}
-    - name: Install poetry
-      run: pip install poetry
+    - name: Install build
+      run: pip install build
     - name: Build
-      run: poetry build
+      run: python -m build
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
@@ -77,7 +77,7 @@ jobs:
       with:
         python-version: ${{ matrix.python }}
     - name: Download build artifacts
-      uses: actions/download-artifact@v2.1.1
+      uses: actions/download-artifact@v3
       with:
         name: rberga06-utils-py${{ matrix.python }}-${{ matrix.os }}
         path: dist
