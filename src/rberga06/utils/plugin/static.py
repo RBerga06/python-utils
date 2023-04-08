@@ -33,8 +33,13 @@ class Static(BaseModel):
         return cls.model_validate(data)
 
 
+class Features(BaseModel):
+    """Plugin runtime features."""
+    # To be subclassed by plugin systems.
+
 
 __all__ = [
     "Info",
     "Static",
+    "Features",
 ]

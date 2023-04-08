@@ -4,16 +4,12 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Generic, Self, TypeVar, cast
 from pydantic import BaseModel, ConfigDict
-from .static import Static
+from .static import Static, Features
 
 if TYPE_CHECKING:  # pragma: no cover
     # Avoid circular imports
     from .system import System
 
-
-class Features(BaseModel):
-    """Plugin dynamic features."""
-    # To be subclassed by plugin systems.
 
 
 _F = TypeVar("_F", bound=Features)

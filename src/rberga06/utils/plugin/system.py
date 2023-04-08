@@ -15,8 +15,8 @@ from pydantic import BaseModel, Field
 
 from ..types import Version
 from ..imports import absolutize_obj_name, import_from, pythonize
-from .static import Static
-from .dynamic import Features, Plugin
+from .static import Static, Features
+from .dynamic import Plugin
 
 
 def _platform_aliases(aliases: dict[str, set[str]]) -> set[str]:
