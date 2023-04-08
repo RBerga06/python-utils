@@ -15,16 +15,17 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ..types import Version
 from ..imports import absolutize_obj_name, import_from, pythonize
-from .spec import Static, Features
+from .spec import Spec, Features
 
 
 _F = TypeVar("_F", bound=Features)
 
 
+@final
 class Plugin(BaseModel, Generic[_F]):
     """A plugin."""
     sys: System[_F]
-    static: Static
+    spec: Spec
     features: _F | None = None  # by default, it's not loaded
 
     @property
@@ -73,7 +74,7 @@ class _PlatformASTNodeTransformer(ast.NodeTransformer):
         ), node)
 
 
-
+@final
 class System(BaseModel, Generic[_F]):
     """A plugin system."""
     name: str
@@ -104,22 +105,22 @@ class System(BaseModel, Generic[_F]):
     @overload
     def compat_ensure(self, obj: Plugin[_F], /) -> Plugin[_F]: ...
     @overload
-    def compat_ensure(self, obj: Static, /) -> Static: ...
-    def compat_ensure(self, obj: Plugin[_F] | Static, /) -> Plugin[_F] | Static:
+    def compat_ensure(self, obj: Spec, /) -> Spec: ...
+    def compat_ensure(self, obj: Plugin[_F] | Spec, /) -> Plugin[_F] | Spec:
         """Make sure the given plugin is compatible with `self`."""
         plugin = None
         if isinstance(obj, Plugin):
-            plugin, obj = obj, obj.static
+            plugin, obj = obj, obj.spec
         if self.compat_eval(obj.sys):
             return obj
         if plugin is None:
-            raise RuntimeError(f"Incompatible plugin static repr: {obj}")
+            raise RuntimeError(f"Incompatible plugin spec: {obj}")
         raise RuntimeError(f"Incompatible plugin: {plugin}")
 
     def register(self, plugin: Plugin[_F]) -> Plugin[_F]:
         """Register the given plugin."""
         self.compat_ensure(plugin)
-        self.plugins[plugin.static.info.name] = plugin
+        self.plugins[plugin.spec.info.name] = plugin
         return plugin
 
     def extend_path_pkg(self, ns: ModuleType | str) -> Self:
@@ -155,12 +156,12 @@ class System(BaseModel, Generic[_F]):
             if file.is_file():  # implies `.exists()`
                 with suppress(Exception):
                     # If any exception occurs, the plugin will simply be discarded
-                    static = self.compat_ensure(Static.read(file))
-                    if static.info.name in self.plugins:
+                    spec = self.compat_ensure(Spec.read(file))
+                    if spec.info.name in self.plugins:
                         # if the plugin is already there, use that!
-                        yield self.plugins[static.info.name]
+                        yield self.plugins[spec.info.name]
                     else:
-                        yield self.register(Plugin(sys=self, static=static))
+                        yield self.register(Plugin(sys=self, spec=spec))
             else:
                 for child in root.iterdir():
                     yield from self._discover(child)
@@ -171,15 +172,15 @@ class System(BaseModel, Generic[_F]):
         if plugin.features is not None:
             return plugin
         # Make sure the module has been imported
-        modulename = f"{self.package}.{pythonize(plugin.static.info.name, ignore='.')}"
+        modulename = f"{self.package}.{pythonize(plugin.spec.info.name, ignore='.')}"
         if modulename not in sys.modules:
             sys.modules[modulename] = import_from(
-                plugin.static.root/plugin.static.lib,
+                plugin.spec.root/plugin.spec.lib,
                 modulename,
             )
         # Resolve the specified feature paths
         features = dict[str, object]()
-        for name, value in plugin.static.feat.items():
+        for name, value in plugin.spec.feat.items():
             features[name] = resolve_name(absolutize_obj_name(value, modulename))
         plugin.features = self.Features.model_validate(features)
         return plugin
