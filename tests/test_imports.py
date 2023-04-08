@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 from pathlib import Path
-from pytest import raises
+import pytest
 from rberga06.utils.imports import *
 
 
@@ -44,9 +44,9 @@ class TestImports:
         from this.is_.a.very.particular.package.in_.a.fake.namespace.with_.an.extremely.long import name  # type: ignore
         assert mod is name
         assert mod.answer == 42
-        with raises(ModuleNotFoundError):
+        with pytest.raises(ModuleNotFoundError):
             import_from(Path("/this/path/does/not/exist"), "doesnt.matter")
-        with raises(ModuleNotFoundError):
+        with pytest.raises(ModuleNotFoundError):
             # dir exists, but __init__.py not found
             import_from(Path(__file__).parent/"plugins", "doesnt.matter")
 
