@@ -26,7 +26,6 @@ addopts = "--cov=rberga06.utils --cov-report term --cov-report html"
 
 
 [tool.pyright]
-reportImportCycles = false
 
 
 [build-system]
