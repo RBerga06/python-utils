@@ -2,5 +2,5 @@
 # -*- coding: utf-8 -*-
 """A flexible, robust and easy-to-use plugin system."""
 from __future__ import annotations
-from .static import *
+from .spec import *
 from .system import *

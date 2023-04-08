@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ..types import Version
 from ..imports import absolutize_obj_name, import_from, pythonize
-from .static import Static, Features
+from .spec import Static, Features
 
 
 _F = TypeVar("_F", bound=Features)
