@@ -191,5 +191,6 @@ Plugin.model_rebuild(force=True)
 
 
 __all__ = [
+    "Plugin",
     "System",
 ]
