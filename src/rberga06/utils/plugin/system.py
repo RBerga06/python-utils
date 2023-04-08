@@ -10,13 +10,43 @@ from pkgutil import resolve_name
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing import TYPE_CHECKING, Generic, Iterator, Self, TypeVar, final, overload
-from pydantic import BaseModel, Field
+from typing import ClassVar, Generic, Iterator, Self, TypeVar, cast, final, overload
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..types import Version
 from ..imports import absolutize_obj_name, import_from, pythonize
 from .static import Static, Features
-from .dynamic import Plugin
+
+
+_F = TypeVar("_F", bound=Features)
+
+
+class Plugin(BaseModel, Generic[_F]):
+    """A plugin."""
+    sys: System[_F]
+    static: Static
+    features: _F | None = None  # by default, it's not loaded
+
+    @property
+    def is_loaded(self) -> bool:
+        return self.features is not None
+
+    def load(self) -> Self:
+        """Load `self` (in-place) and return it."""
+        return self.sys.load(self)
+
+    @property
+    def feat(self) -> _F:
+        """Lazy shortcut for `.load().features`."""
+        if self.features is None:
+            self.load()
+        return cast(_F, self.features)
+
+    # Pydantic model configuration
+    model_config: ClassVar[ConfigDict] = {
+        "undefined_types_warning": False,
+    }
+
 
 
 def _platform_aliases(aliases: dict[str, set[str]]) -> set[str]:
@@ -42,8 +72,6 @@ class _PlatformASTNodeTransformer(ast.NodeTransformer):
             ctx=node.ctx
         ), node)
 
-
-_F = TypeVar("_F", bound=Features)
 
 
 class System(BaseModel, Generic[_F]):
@@ -157,11 +185,8 @@ class System(BaseModel, Generic[_F]):
         return plugin
 
 
-if not TYPE_CHECKING:
-    # Fix forward refs
-    from . import dynamic
-    setattr(dynamic, "System", System)
-    Plugin.model_rebuild(force=True)
+# `System` was defined after `Plugin`
+Plugin.model_rebuild(force=True)
 
 
 __all__ = [
