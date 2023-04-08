@@ -68,7 +68,7 @@ class ref(Generic[_T]):
     @staticmethod
     def validate(obj: ref[_T] | weakref.ref[_T] | _T, info: ValidationInfo, /) -> ref[_T]:
         if isinstance(obj, ref):
-            return obj
+            return cast(ref[_T], obj)
         else:
             return ref(obj)
 

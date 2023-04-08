@@ -56,8 +56,8 @@ class TestPluginSystem:
     @pytest.mark.order(3)
     def test_read_static(self):
         plugins = Path(__file__).parent/"plugins"
-        hello = Static.read(plugins/"hello/.plugin.yml")
-        error = Static.read(plugins/"err_compat/.plugin.yml")
+        hello = Spec.read(plugins/"hello/.plugin.yml")
+        error = Spec.read(plugins/"err_compat/.plugin.yml")
         assert hello
         assert error
         assert s.compat_ensure(hello)
