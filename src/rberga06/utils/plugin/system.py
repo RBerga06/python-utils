@@ -152,7 +152,7 @@ class System(BaseModel, Generic[_F]):
     def _discover(self, root: Path) -> Iterator[Plugin[_F]]:
         """Discover plugins at `root` (and its subdirs)."""
         if root.is_dir():  # implies `.exists()``
-            file = root/self.info_file
+            file = (root/self.info_file).resolve()
             if file.is_file():  # implies `.exists()`
                 with suppress(Exception):
                     # If any exception occurs, the plugin will simply be discarded
@@ -175,7 +175,7 @@ class System(BaseModel, Generic[_F]):
         modulename = f"{self.package}.{pythonize(plugin.spec.info.name, ignore='.')}"
         if modulename not in sys.modules:
             sys.modules[modulename] = import_from(
-                plugin.spec.root/plugin.spec.lib,
+                plugin.spec.root.joinpath(plugin.spec.lib).resolve(),
                 modulename,
             )
         # Resolve the specified feature paths
