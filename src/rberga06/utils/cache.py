@@ -3,7 +3,7 @@
 """Useful caching utilities."""
 from __future__ import annotations
 from functools import wraps
-from typing import Callable, Generic, Literal, Protocol, Self, TypeGuard, TypeVar, cast, final, overload
+from typing import Callable, Generic, Literal, Protocol, TypeGuard, TypeVar, cast, final, overload
 
 
 _T = TypeVar("_T")
@@ -63,7 +63,7 @@ class cache(Generic[_T]):
     @staticmethod
     def get(obj: object, /, *, strict: Literal[False]) -> cache[_T] | None: ...
     @staticmethod
-    def get(obj: WithCache[_T] | object, /, *, strict: bool = True) -> cache | None:
+    def get(obj: WithCache[_T] | object, /, *, strict: bool = True) -> cache[_T] | None:
         """Return `obj`'s cache (or `raise ValueError(...)` if `strict`, else `return None`)."""
         if cache.has(obj, strict=True):
             return obj.__cache__
@@ -79,7 +79,7 @@ class cache(Generic[_T]):
     def read(self: cache[_T] | WithCache[_T] | object, /, *, strict: Literal[True]) -> _T: ...
     @overload
     def read(self: cache[_T] | WithCache[_T] | object, /, *, strict: Literal[False] = ...) -> _T | None: ...
-    def read(self: cache | WithCache[_T] | object, /, *, strict: bool = False) -> _T | None:
+    def read(self: cache[_T] | WithCache[_T] | object, /, *, strict: bool = False) -> _T | None:
         """Read `self`'s cache."""
         if cache.is_(self):
             if strict and self._ is None:
@@ -112,6 +112,7 @@ class cache(Generic[_T]):
         """Cache `f`'s calls (and exceptions!)."""
         if f is None:
             return cache({}).call(cast(_F, self))
+        self = cast(cache[CallCacheData], self)
         @wraps(f)
         @self.set
         def inner(*args: object, **kwargs: object) -> object:
@@ -138,11 +139,11 @@ class cache(Generic[_T]):
 CallCacheData = dict[
     tuple[
         tuple[object, ...],            # *args
-        frozenset[tuple[str, object]]  # **kwargs
+        frozenset[tuple[str, object]], # **kwargs
     ],
     tuple[
         object,                        # return / exception
-        bool                           # did it raise?
+        bool,                          # did it raise?
     ]
 ]
 
