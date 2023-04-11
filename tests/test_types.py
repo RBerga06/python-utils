@@ -30,7 +30,7 @@ class TestRef:
         assert r.is_weak == weak
         assert obj is r.inner
         if weak:
-            assert r._ is r() is cast(weakref.ref, obj)()
+            assert r._ is r() is cast(weakref.ref[object], obj)()
         else:
             assert r._ is r() is obj
 
@@ -61,7 +61,7 @@ class TestRef:
     def test_pytest(self):
         class Model(BaseModel):
             r: ref[Foo]
-    
+
         foo = Foo()
         assert Model(r=ref(foo)).r._ is foo
         assert Model(r=ref(weakref.ref(foo))).r._ is foo

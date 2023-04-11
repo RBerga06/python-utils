@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Static plugin data."""
+"""Plugin specification."""
 from __future__ import annotations
-from typing import Self
+from typing import Self, final
 from pydantic import BaseModel, DirectoryPath, FilePath
 import yaml
 from ..types import Version
 
 
+@final
 class Info(BaseModel):
     """Plugin information."""
     name: str
@@ -17,8 +18,9 @@ class Info(BaseModel):
     license: str = "<none>"
 
 
-class Static(BaseModel):
-    """Static plugin data."""
+@final
+class Spec(BaseModel):
+    """Plugin specification."""
     root: DirectoryPath
     sys: str
     info: Info
@@ -33,8 +35,13 @@ class Static(BaseModel):
         return cls.model_validate(data)
 
 
+class Features(BaseModel):
+    """Plugin runtime features."""
+    # To be subclassed by plugin systems.
+
 
 __all__ = [
     "Info",
-    "Static",
+    "Spec",
+    "Features",
 ]
