@@ -24,7 +24,17 @@ pytest-mypy = "^0.10.3"
 testpaths = [
     "tests",
 ]
-addopts = "--cov=rberga06.utils --cov-report term --cov-report html"
+addopts = "--mypy --cov=rberga06.utils --cov-report term --cov-report html"
+
+
+[tool.mypy]
+mypy_path = [
+    "src",
+]
+explicit_package_bases = true
+packages = [
+    "rberga06.utils",
+]
 
 
 [tool.pyright]
