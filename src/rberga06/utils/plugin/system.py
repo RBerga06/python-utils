@@ -11,6 +11,7 @@ from pathlib import Path
 import sys
 from types import ModuleType
 from typing import ClassVar, Generic, Iterator, Self, TypeVar, cast, final, overload
+from typing_extensions import override
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..types import Version
@@ -44,7 +45,7 @@ class Plugin(BaseModel, Generic[_F]):
         return cast(_F, self.features)
 
     # Pydantic model configuration
-    model_config: ClassVar[ConfigDict] = {
+    model_config: ClassVar[ConfigDict] = {  # type: ignore[misc]
         "undefined_types_warning": False,
     }
 
@@ -67,6 +68,7 @@ _PLATFORM_ALIASES: set[str] = _platform_aliases(dict(
 class _PlatformASTNodeTransformer(ast.NodeTransformer):
     """AST node transformer for platform requirements."""
 
+    @override
     def visit_Name(self, node: ast.Name) -> ast.AST:
         return ast.copy_location(ast.Constant(
             value=(node.id.lower() in _PLATFORM_ALIASES),
@@ -98,9 +100,9 @@ class System(BaseModel, Generic[_F]):
             return False
         # Check platform
         if not segments: return True
-        return eval(compile(_PlatformASTNodeTransformer().visit(
+        return cast(bool, eval(compile(_PlatformASTNodeTransformer().visit(
             ast.parse(" ".join(segments).removeprefix("on").strip(), mode="eval")
-        ), "<file>", "eval"))
+        ), "<file>", "eval")))
 
     @overload
     def compat_ensure(self, obj: Plugin[_F], /) -> Plugin[_F]: ...

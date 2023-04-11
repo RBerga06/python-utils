@@ -53,12 +53,13 @@ class ref(Generic[_T]):
     def __call__(self, /, *, strict: Literal[False]) -> _T | None: ...
     def __call__(self, /, *, strict: bool = True) -> _T | None:
         """The wrapped value (`weakref`-style access)."""
-        val = self.inner
         if self.is_weak:
-            val = cast(weakref.ref[_T], val)()
+            val = cast(weakref.ref[_T], self.inner)()
             if strict and val is None:
                 raise ValueError("Empty reference.")
-        return cast(_T, val)
+        else:
+            val = cast(_T, self.inner)
+        return val
 
     @property
     def is_weak(self) -> bool:

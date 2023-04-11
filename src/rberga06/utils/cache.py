@@ -65,7 +65,7 @@ class cache(Generic[_T]):
     @staticmethod
     def get(obj: WithCache[_T] | object, /, *, strict: bool = True) -> cache[_T] | None:
         """Return `obj`'s cache (or `raise ValueError(...)` if `strict`, else `return None`)."""
-        if cache.has(obj, strict=True):
+        if cache[_T].has(obj, strict=True):
             return obj.__cache__
         if isinstance(obj, property):
             return cache.get(obj.fget, strict=strict)  # type: ignore
@@ -103,30 +103,33 @@ class cache(Generic[_T]):
         setattr(obj, "__cache__", self)
         return obj
 
-    @overload
+    @overload   # type: ignore[misc]
     @staticmethod
     def call(f: _F, /) -> _F: ...
     @overload
     def call(self: cache[CallCacheData], f: _F, /) -> _F: ...
-    def call(self: cache[CallCacheData] | _F, f: _F = None, /) -> _F:
+    def call(self: cache[CallCacheData] | _F, f: _F | None = None, /) -> _F:
         """Cache `f`'s calls (and exceptions!)."""
         if f is None:
-            return cache({}).call(cast(_F, self))
-        self = cast(cache[CallCacheData], self)
-        @wraps(f)
-        @self.set
+            this = cache[CallCacheData]({})
+            func = cast(_F, self)
+        else:
+            this = cast(cache[CallCacheData], self)
+            func = f
+        @wraps(func)
+        @this.set
         def inner(*args: object, **kwargs: object) -> object:
             frozen = (args, frozenset(kwargs.items()))
-            cached = self.read()
+            cached = this.read()
             if cached is None:
-                self._ = cached = {}
+                this._ = cached = {}
             if frozen in cached:
                 result, failed = cached[frozen]
                 if failed:
                     raise cast(BaseException, result)
                 return result
             try:
-                result = f(*args, **kwargs)
+                result = func(*args, **kwargs)
             except BaseException as result:
                 cached[frozen] = (result, True)
                 raise
