@@ -12,18 +12,36 @@ python = "^3.11"
 pydantic = {git = "https://github.com/pydantic/pydantic"}
 packaging = "^23.0"
 pyyaml = "^6.0"
+typing-extensions = "^4.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.0"
 pytest-cov = "^4.0.0"
 pytest-order = "^1.1.0"
+pytest-mypy = "^0.10.3"
+types-pyyaml = "^6.0.12.9"
 
 
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
 ]
-addopts = "--cov=rberga06.utils --cov-report term --cov-report html"
+addopts = "--mypy --cov=rberga06.utils --cov-report term --cov-report html"
+
+
+[tool.mypy]
+mypy_path = [
+    "src",
+]
+explicit_package_bases = true
+packages = [
+    "rberga06.utils",
+]
+plugins = [
+    "pydantic.mypy",
+]
+strict = true
+warn_unused_ignores = false
 
 
 [tool.pyright]

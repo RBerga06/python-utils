@@ -7,7 +7,7 @@ from rberga06.utils.imports import *
 
 
 class TestImports:
-    def test_pythonize(self):
+    def test_pythonize(self) -> None:
         for inp, out in [
             ("abc", "abc"),
             ("a-b", "a_b"),
@@ -21,7 +21,7 @@ class TestImports:
         ]:
             assert pythonize(inp) == out
 
-    def test_absolutize_obj_name(self):
+    def test_absolutize_obj_name(self) -> None:
         for inp, out in [
             ("a.b",      "a.b"),
             ("a.b:c.d",  "a.b:c.d"),
@@ -33,7 +33,7 @@ class TestImports:
         ]:
             assert absolutize_obj_name(inp, "root") == out
 
-    def test_import_from(self):
+    def test_import_from(self) -> None:
         mod = import_from(
             Path(__file__).parent/"plugins/hello/lib.py",
             "this.is_.a.very.particular.package.in_.a.fake.namespace.with_.an.extremely.long.name",
@@ -50,5 +50,5 @@ class TestImports:
             # dir exists, but __init__.py not found
             import_from(Path(__file__).parent/"plugins", "doesnt.matter")
 
-    def test_fake_module(self):
+    def test_fake_module(self) -> None:
         import_or_fake("this.package.will.be.created", parents_know=True)

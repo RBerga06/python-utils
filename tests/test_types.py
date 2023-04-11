@@ -12,7 +12,7 @@ from rberga06.utils.types import *
 class TestVersion:
     """Test pydantic(v2) compatibility."""
 
-    def test_version(self):
+    def test_version(self) -> None:
         class Model(BaseModel):
             v: Version
         m = Model(v=Version("v1.0.0"))
@@ -25,7 +25,7 @@ class Foo: ...
 
 
 class TestRef:
-    def _test_ref(self, obj: object, weak: bool):
+    def _test_ref(self, obj: object, weak: bool) -> None:
         r = ref(obj)
         assert r.is_weak == weak
         assert obj is r.inner
@@ -34,7 +34,7 @@ class TestRef:
         else:
             assert r._ is r() is obj
 
-    def test_ref(self):
+    def test_ref(self) -> None:
         for obj, weak_allowed in (
             (42, False),
             ([42], False),
@@ -46,11 +46,11 @@ class TestRef:
                 self._test_ref(weakref.ref(obj), True)
             else:
                 with pytest.raises(TypeError):
-                    ref(weakref.ref(obj))
+                    ref[object](weakref.ref(obj))
 
-    def test_empty(self):
+    def test_empty(self) -> None:
         foo = Foo()
-        r = ref(weakref.ref(foo))
+        r = ref[object](weakref.ref(foo))
         del foo
         with pytest.raises(ValueError):
             r._
@@ -58,7 +58,7 @@ class TestRef:
             r()
         assert r(strict=False) is None
 
-    def test_pytest(self):
+    def test_pytest(self) -> None:
         class Model(BaseModel):
             r: ref[Foo]
 
