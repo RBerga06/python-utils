@@ -32,7 +32,7 @@ class TestPluginSystem:
             version="v1.0.0",   # type: ignore
             package="rberga06.utils.tests.plugins",
             Features=_TestPluginSystemFeatures
-        ).extend_path_pkg(__package__)
+        ).extend_path(Path(__file__).parent/"plugins")
 
         with pytest.raises(ModuleNotFoundError):
             s.extend_path_pkg("package.does.not.exist")
