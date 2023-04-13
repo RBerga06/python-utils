@@ -13,20 +13,20 @@ on:
 
 
 jobs:
-  # test on all supported platforms
+  # Test on all supported platforms
   test:
     strategy:
       fail-fast: false
       matrix:
         os: [ "ubuntu", "macos", "windows" ]
         python: [ "3.11" ]  # python: [ "3.11", "3.12.0-alpha.7" ]
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{matrix.os}}-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python }}
+    - name: Set up Python ${{matrix.python}}
       uses: actions/setup-python@v3
       with:
-        python-version: ${{ matrix.python }}
+        python-version: ${{matrix.python}}
     - name: Install poetry
       run: pip install poetry
     - name: Editable install
@@ -49,11 +49,15 @@ jobs:
       run: pip install build
     - name: Build
       run: python -m build
+    - id: find-artifacts
+      name: Find build artifacts
+      run: echo wheel=$(ls *.whl) > $GITHUB_OUTPUT
+      shell: bash
     - name: Upload wheel
       uses: actions/upload-artifact@v3
       with:
         name: wheel
-        path: dist/*.whl
+        path: ${{steps.find-artifacts.outputs.wheel}}
     - name: Upload source distribution
       uses: actions/upload-artifact@v3
       with:
@@ -64,5 +68,5 @@ jobs:
       uses: fnkr/github-action-ghr@v1
       if: startsWith(github.ref, 'refs/tags/')
       env:
-        GHR_PATH: dist/*.whl
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GHR_PATH: ${{steps.find-artifacts.outputs.wheel}}
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
