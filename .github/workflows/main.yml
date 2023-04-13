@@ -47,22 +47,17 @@ jobs:
         python-version: "3.11"
     - name: Install build
       run: pip install build
-    - name: Build
-      run: python -m build
+    - name: Build wheel
+      run: python -m build -w
     - id: find-artifacts
-      name: Find build artifacts
-      run: echo wheel=$(ls *.whl) > $GITHUB_OUTPUT
+      name: Find built artifacts
+      run: echo wheel=$(ls dist/*.whl) > $GITHUB_OUTPUT
       shell: bash
     - name: Upload wheel
       uses: actions/upload-artifact@v3
       with:
         name: wheel
         path: ${{steps.find-artifacts.outputs.wheel}}
-    - name: Upload source distribution
-      uses: actions/upload-artifact@v3
-      with:
-        name: sdist
-        path: dist/*.tar.gz
     # Release
     - name: Release
       uses: fnkr/github-action-ghr@v1
