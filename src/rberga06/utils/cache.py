@@ -98,7 +98,7 @@ class WithCache(Protocol[_C]):
     __cache__: _C
 
 
-def clear(obj: object, /, *, cls: type[Cache[object, object]] = Cache[object]) -> None:
+def clear(obj: object, /, *, cls: type[Cache[Any, Any]] = Cache[object, None]) -> None:
     c = cls.get(obj, strict=False)
     if c is not None:
         c.clear()

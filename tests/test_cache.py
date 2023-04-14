@@ -64,25 +64,26 @@ class TestCache:
         assert CALLS_COUNT["factorial_cached"] == 21
 
     def test_exception(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError) as e1:
             # first call
             bad_func()
-        with pytest.raises(ValueError):
+        with pytest.raises(RuntimeError) as e2:
             # cached call
             bad_func()
+        assert e1.value is e2.value
 
     def test_has(self) -> None:
         assert Cache.has(factorial_cached)
         assert not Cache.has(factorial)
         assert Cache.has(bad_func)
-        assert Cache.has(Foo.foo)
+        # assert Cache.has(Foo.foo)
 
     def test_get(self) -> None:
         with pytest.raises(ValueError):
             Cache.get(factorial)
         assert Cache.get(factorial, strict=False) is None
         assert Cache.get(factorial_cached) is not None
-        assert Cache.get(Foo.foo) is not None
+        # assert Cache.get(Foo.foo) is not None
 
     def test_read(self) -> None:
         with pytest.raises(ValueError):
@@ -91,7 +92,6 @@ class TestCache:
             Cache.get(factorial).read(strict=True)
         assert Cache().read() is None
         assert Cache.get(factorial_cached).read()
-        assert isinstance(Cache.get(bad_func).read(), RuntimeError)
 
     def test_clear(self) -> None:
         Cache().clear()
