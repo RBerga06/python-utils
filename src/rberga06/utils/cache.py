@@ -1,135 +1,142 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# mypy: ignore-errors
 """Useful caching utilities."""
 from __future__ import annotations
+import enum
 from functools import wraps
-from typing import Callable, Generic, Literal, Protocol, TypeGuard, TypeVar, cast, final, overload
+from typing import Any, Callable, Generic, Hashable, Literal, Protocol, Self, TypeGuard, cast, overload
+from typing_extensions import TypeVar
 
 
-_T = TypeVar("_T")
+class _Sentinels(enum.Enum):
+    DEFAULT = enum.auto()
+DEFAULT = _Sentinels.DEFAULT
+
+
 _X = TypeVar("_X")
-_F = TypeVar("_F", bound=Callable[..., object])
+_T = TypeVar("_T", infer_variance=True)
+_U = TypeVar("_U", infer_variance=True, default=_T)
 
 
-class WithCache(Protocol[_T]):
-    __cache__: cache[_T]
 
-
-@final
-class cache(Generic[_T]):
+class Cache(Generic[_T, _U]):
     """A cache."""
     __slots__ = ("_",)
 
-    _: _T | None
+    _: _T | _U
     """The value stored in the cache."""
 
-    def __init__(self, _: _T | None = None) -> None:
-        self._ = _
+    @classmethod
+    def default(cls: type[Cache[_T, _U]]) -> _U:
+        """The default value (empty cache)."""
+        return cast(_U, None)
+
+    def __init__(self, _: _T | _U | Literal[DEFAULT] = DEFAULT) -> None:
+        if _ is DEFAULT:
+            self._ = self.default()
+        else:
+            self._ = _
 
     def __repr__(self) -> str:
-        return f"<cache: {self._!r}>"
+        return f"<Cache: {self._!r}>"
 
-    @staticmethod
-    def is_(obj: object, /) -> TypeGuard[cache[_T]]:
-        """Check if `obj` is a cache."""
-        return isinstance(obj, cache)
+    def __bool__(self) -> bool:
+        return not self.is_empty
 
-    @overload
-    @staticmethod
-    def has(obj: object, /, *, strict: Literal[True]) -> TypeGuard[WithCache[_T]]: ...
-    @overload
-    @staticmethod
-    def has(obj: object, /, *, strict: Literal[False] = ...) -> bool: ...
-    @staticmethod
-    def has(obj: object, /, *, strict: bool = False) -> TypeGuard[WithCache[_T]] | bool:
-        """Check if `obj` has a cache."""
-        if cache.is_(getattr(obj, "__cache__", None)):
-            return True
-        if strict:
-            return False
-        if isinstance(obj, property):
-            return cache.has(obj.fget, strict=False)
-        if hasattr(obj, "__wrapped__"):
-            return cache.has(getattr(obj, "__wrapped__"))
-        return False
+    @property
+    def is_empty(self, /) -> bool:
+        return self.default() == self._
+
+    @classmethod
+    def has(cls, obj: object, /) -> TypeGuard[WithCache[Self]]:
+        """Check if `obj` has a cache of this type."""
+        return isinstance(getattr(obj, "__cache__", None), cls)
 
     @overload
-    @staticmethod
-    def get(obj: WithCache[_T], /, *, strict: bool = ...) -> cache[_T]: ...
+    @classmethod
+    def get(cls, obj: object, /, *, strict: Literal[True]) -> Self: ...
     @overload
-    @staticmethod
-    def get(obj: object, /, *, strict: Literal[True] = ...) -> cache[_T]: ...
-    @overload
-    @staticmethod
-    def get(obj: object, /, *, strict: Literal[False]) -> cache[_T] | None: ...
-    @staticmethod
-    def get(obj: WithCache[_T] | object, /, *, strict: bool = True) -> cache[_T] | None:
+    @classmethod
+    def get(cls, obj: object, /, *, strict: Literal[False]) -> Self | None: ...
+    @classmethod
+    def get(cls, obj: object, /, *, strict: bool) -> Self | None:
         """Return `obj`'s cache (or `raise ValueError(...)` if `strict`, else `return None`)."""
-        if cache[_T].has(obj, strict=True):
+        if isinstance(obj, cls):
+            return obj
+        if cls.has(obj):
             return obj.__cache__
-        if isinstance(obj, property):
-            return cache.get(obj.fget, strict=strict)  # type: ignore
-        if hasattr(obj, "__wrapped__"):
-            return cache.get(getattr(obj, "__wrapped__"), strict=strict)
         if strict:
             raise ValueError(f"{obj!r} has no cache.")
         return None
 
     @overload
-    def read(self: cache[_T] | WithCache[_T] | object, /, *, strict: Literal[True]) -> _T: ...
+    def read(self, /, *, strict: Literal[True] = ...) -> _T: ...
     @overload
-    def read(self: cache[_T] | WithCache[_T] | object, /, *, strict: Literal[False] = ...) -> _T | None: ...
-    def read(self: cache[_T] | WithCache[_T] | object, /, *, strict: bool = False) -> _T | None:
+    def read(self, /, *, strict: Literal[False]) -> _T | _U: ...
+    def read(self, /, *, strict: bool = False) -> _T | _U:
         """Read `self`'s cache."""
-        if cache.is_(self):
-            if strict and self._ is None:
-                raise ValueError(f"Empty cache: {self!r}")
-            return self._
-        if cache.has(self):
-            return cache.get(self).read()
-        if strict:
-            raise ValueError(f"{self!r} has no cache.")
-        return None
+        if strict and self.is_empty:
+            raise ValueError(f"Empty cache: {self!r}")
+        return self._
 
-    def clear(self: cache[_T] | WithCache[_T] | object, /) -> None:
+    def clear(self, /) -> None:
         """Clar `obj`'s cache (if any)."""
-        if cache.is_(self):
-            self._ = None
-        elif cache.has(self):
-            cache.get(self).clear()
+        self._ = self.default()
 
     def set(self, obj: _X, /) -> _X:
         """Decorator: set `self` as `obj`'s cache."""
         setattr(obj, "__cache__", self)
         return obj
 
-    @overload   # type: ignore[misc]
-    @staticmethod
-    def call(f: _F, /) -> _F: ...
-    @overload
-    def call(self: cache[CallCacheData], f: _F, /) -> _F: ...
-    def call(self: cache[CallCacheData] | _F, f: _F | None = None, /) -> _F:
+
+_C = TypeVar("_C", infer_variance=True, bound=Cache[Any, Any])
+_F = TypeVar("_F", bound=Callable[..., object])
+
+
+class WithCache(Protocol[_C]):
+    __cache__: _C
+
+
+def clear(obj: object, /, *, cls: type[Cache[object, object]] = Cache[object]) -> None:
+    c = cls.get(obj, strict=False)
+    if c is not None:
+        c.clear()
+
+
+_K = TypeVar(
+    "_K", infer_variance=True, bound=Hashable, default=tuple[
+        tuple[object, ...],             # *args
+        frozenset[tuple[str, object]],  # **kwargs
+    ]
+)
+
+
+class FCache(Cache[dict[_K, tuple[object, bool]], dict[_K, tuple[object, bool]]]):
+    """Function cache."""
+
+    @classmethod
+    def default(cls) -> dict[_K, tuple[object, bool]]:
+        return {}
+
+    def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> _K:
+        """Freeze call parameters."""
+        return cast(_K, (args, frozenset(kwargs.items())))
+
+    def func(self, f: _F, /) -> _F:
         """Cache `f`'s calls (and exceptions!)."""
-        if f is None:
-            this = cache[CallCacheData]({})
-            func = cast(_F, self)
-        else:
-            this = cast(cache[CallCacheData], self)
-            func = f
-        @wraps(func)
-        @this.set
+        @wraps(f)
+        @self.set
         def inner(*args: object, **kwargs: object) -> object:
-            frozen = (args, frozenset(kwargs.items()))
-            cached = this.read()
-            if cached is None:
-                this._ = cached = {}
+            frozen = self._freeze_params(args, kwargs)
+            cached = self.read()
             if frozen in cached:
                 result, failed = cached[frozen]
                 if failed:
                     raise cast(BaseException, result)
                 return result
             try:
-                result = func(*args, **kwargs)
+                result = f(*args, **kwargs)
             except BaseException as result:
                 cached[frozen] = (result, True)
                 raise
@@ -139,16 +146,53 @@ class cache(Generic[_T]):
         return cast(_F, inner)
 
 
-CallCacheData = dict[
-    tuple[
-        tuple[object, ...],            # *args
-        frozenset[tuple[str, object]], # **kwargs
-    ],
-    tuple[
-        object,                        # return / exception
-        bool,                          # did it raise?
-    ]
+class FCacheNoParams(FCache[None]):
+    """A function cache that ignores `*args` and `**kwargs`."""
+
+    def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> None:
+        return None
+
+
+class FCacheKwOnly(FCache[frozenset[tuple[str, object]]]):
+    """A function cache that ignores `*args`."""
+
+    def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> frozenset[tuple[str, object]]:
+        return frozenset(kwargs.items())
+
+
+class FCacheArgOnly(FCache[tuple[object, ...]]):
+    """A function cache that ignores `**kwargs`."""
+
+    def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> tuple[object, ...]:
+        return args
+
+
+class FCacheOneArg(FCache[object]):
+    """A function cache that only checks the first positional argument."""
+
+    def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> object:
+        return args[0]
+
+
+@overload
+def func(f: None = ..., /, *, cls: type[FCache[Any]] = FCache) -> Callable[[_F], _F]: ...
+@overload
+def func(f: _F, /) -> _F: ...
+def func(f: _F | None = None, /, *, cls: type[FCache[Any]] = FCache) -> _F | Callable[[_F], _F]:
+    if f is None:
+        return cls().func
+    return cls().func(f)
+
+
+
+__all__ = [
+    "DEFAULT",
+    "WithCache",
+    "Cache",
+    "clear",
+    "func",
+    "FCache",
+    "FCacheKwOnly",
+    "FCacheArgOnly",
+    "FCacheOneArg",
 ]
-
-
-__all__ = ["WithCache", "cache", "CallCacheData"]
