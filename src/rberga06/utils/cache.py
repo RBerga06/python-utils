@@ -55,12 +55,12 @@ class Cache(Generic[_T, _U]):
 
     @overload
     @classmethod
-    def get(cls, obj: object, /, *, strict: Literal[True]) -> Self: ...
+    def get(cls, obj: object, /, *, strict: Literal[True] = ...) -> Self: ...
     @overload
     @classmethod
     def get(cls, obj: object, /, *, strict: Literal[False]) -> Self | None: ...
     @classmethod
-    def get(cls, obj: object, /, *, strict: bool) -> Self | None:
+    def get(cls, obj: object, /, *, strict: bool = True) -> Self | None:
         """Return `obj`'s cache (or `raise ValueError(...)` if `strict`, else `return None`)."""
         if isinstance(obj, cls):
             return obj

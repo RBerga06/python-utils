@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# mypy: ignore-errors
 """Test `rberga06.utils.cache`."""
 from __future__ import annotations
 from functools import wraps
 from typing import Callable, NamedTuple, NoReturn, TypeVar, cast
 import pytest
-from rberga06.utils.cache import cache
+from rberga06.utils import cache
+from rberga06.utils.cache import Cache
 
 
 _F = TypeVar("_F", bound=Callable[..., object])
@@ -31,7 +33,7 @@ def factorial(x: int, /) -> int:
     return factorial(x - 1)
 
 
-@cache.call
+@cache.func
 @count_calls
 def factorial_cached(x: int, /) -> int:
     if x == 0:
@@ -39,16 +41,16 @@ def factorial_cached(x: int, /) -> int:
     return factorial_cached(x - 1)
 
 
-@cache.call
+@cache.func
 def bad_func() -> NoReturn:
-    raise ValueError("Bad func called!")
+    raise RuntimeError("Bad func called!")
 
 
 class Foo(NamedTuple):
     name: str
 
     @property
-    @cache.call
+    @cache.func
     def foo(self) -> str:
         return self.name
 
@@ -70,32 +72,32 @@ class TestCache:
             bad_func()
 
     def test_has(self) -> None:
-        assert cache.has(factorial_cached)
-        assert not cache.has(factorial)
-        assert cache.has(bad_func)
-        assert cache.has(Foo.foo)
+        assert Cache.has(factorial_cached)
+        assert not Cache.has(factorial)
+        assert Cache.has(bad_func)
+        assert Cache.has(Foo.foo)
 
     def test_get(self) -> None:
         with pytest.raises(ValueError):
-            cache.get(factorial)
-        assert cache.get(factorial, strict=False) is None
-        assert cache.get(factorial_cached) is not None
-        assert cache.get(Foo.foo) is not None
+            Cache.get(factorial)
+        assert Cache.get(factorial, strict=False) is None
+        assert Cache.get(factorial_cached) is not None
+        assert Cache.get(Foo.foo) is not None
 
     def test_read(self) -> None:
         with pytest.raises(ValueError):
-            cache().read(strict=True)
+            Cache().read(strict=True)
         with pytest.raises(ValueError):
-            cache.read(factorial, strict=True)  # type: ignore
-        assert cache().read() is None
-        assert cache.read(factorial) is None  # type: ignore
-        assert cache.read(factorial_cached)  # type: ignore
+            Cache.get(factorial).read(strict=True)
+        assert Cache().read() is None
+        assert Cache.get(factorial_cached).read()
+        assert isinstance(Cache.get(bad_func).read(), RuntimeError)
 
     def test_clear(self) -> None:
-        cache().clear()
-        cache.clear(factorial)  # type: ignore
-        cache.clear(factorial_cached)  # type: ignore
-        cache.clear(Foo.foo)  # type: ignore
-        assert cache.read(factorial_cached) is None  # type: ignore
+        Cache().clear()
+        cache.clear(factorial)
+        cache.clear(factorial_cached)
+        cache.clear(Foo.foo)
+        assert not Cache.get(factorial_cached)
         factorial_cached(10)
-        assert cache.read(factorial_cached) is not None  # type: ignore
+        assert Cache.get(factorial_cached)
