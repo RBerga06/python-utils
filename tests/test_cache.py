@@ -6,8 +6,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import Callable, NamedTuple, NoReturn, TypeVar, cast
 import pytest
-from rberga06.utils import cache
-from rberga06.utils.cache import Cache
+from rberga06.utils.cache import *
 
 
 _F = TypeVar("_F", bound=Callable[..., object])
@@ -33,7 +32,7 @@ def factorial(x: int, /) -> int:
     return factorial(x - 1)
 
 
-@cache.func
+@func(cls=FCacheOneArg)
 @count_calls
 def factorial_cached(x: int, /) -> int:
     if x == 0:
@@ -41,7 +40,7 @@ def factorial_cached(x: int, /) -> int:
     return factorial_cached(x - 1)
 
 
-@cache.func
+@func
 def bad_func() -> NoReturn:
     raise RuntimeError("Bad func called!")
 
@@ -50,7 +49,7 @@ class Foo(NamedTuple):
     name: str
 
     @property
-    @cache.func
+    @func
     def foo(self) -> str:
         return self.name
 
@@ -60,7 +59,6 @@ class TestCache:
         assert factorial_cached(20) == factorial(20)
         assert factorial_cached(10) == factorial(10)
         assert CALLS_COUNT["factorial"] == 32
-        print(vars(factorial_cached))
         assert CALLS_COUNT["factorial_cached"] == 21
 
     def test_exception(self) -> None:
@@ -95,9 +93,9 @@ class TestCache:
 
     def test_clear(self) -> None:
         Cache().clear()
-        cache.clear(factorial)
-        cache.clear(factorial_cached)
-        cache.clear(Foo.foo)
+        clear(factorial)
+        clear(factorial_cached)
+        clear(Foo.foo)
         assert not Cache.get(factorial_cached)
         factorial_cached(10)
         assert Cache.get(factorial_cached)
