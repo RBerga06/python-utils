@@ -40,7 +40,7 @@ def factorial_cached(x: int, /) -> int:
     return factorial_cached(x - 1)
 
 
-@func
+@func(cls=FCacheNoParams)
 def bad_func() -> NoReturn:
     raise RuntimeError("Bad func called!")
 

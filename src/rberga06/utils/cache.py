@@ -195,4 +195,5 @@ __all__ = [
     "FCacheKwOnly",
     "FCacheArgOnly",
     "FCacheOneArg",
+    "FCacheNoParams",
 ]
