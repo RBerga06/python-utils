@@ -5,6 +5,7 @@
 from __future__ import annotations
 import enum
 from functools import wraps
+import inspect
 from typing import Any, Callable, Generic, Hashable, Literal, Protocol, Self, TypeGuard, cast, overload
 from typing_extensions import TypeVar
 
@@ -174,13 +175,40 @@ class FCacheOneArg(FCache[object]):
         return args[0]
 
 
+def _optimal_fcache(f: Callable[..., Any], /) -> type[FCache[Any]]:
+    """Get the optimal `FCache` type for the given function, based on its signature."""
+    params = [p.kind for p in inspect.signature(f).parameters.values()]
+    if not params:
+        return FCacheNoParams
+    if inspect.Parameter.POSITIONAL_OR_KEYWORD in params:
+        # It's not safe to exclude *args or **kwargs
+        return FCache[Any]
+    has_var_pos = inspect.Parameter.VAR_POSITIONAL in params
+    if (inspect.Parameter.KEYWORD_ONLY in params) or (inspect.Parameter.VAR_KEYWORD in params):
+        # We need to preserve **kwargs
+        if has_var_pos or (inspect.Parameter.POSITIONAL_ONLY in params):
+            # We also need to preserve *args
+            return FCache[Any]
+        # No need to preserve *args
+        return FCacheKwOnly
+    # No need to preserve **kwargs
+    if (len(params) == 1) and not has_var_pos:
+        # There is only one arg
+        return FCacheOneArg
+    return FCacheArgOnly
+
+
 @overload
-def func(f: None = ..., /, *, cls: type[FCache[Any]] = FCache) -> Callable[[_F], _F]: ...
+def func(f: None = ..., /, *, cls: type[FCache[Any]] | None = ...) -> Callable[[_F], _F]: ...
 @overload
 def func(f: _F, /) -> _F: ...
-def func(f: _F | None = None, /, *, cls: type[FCache[Any]] = FCache) -> _F | Callable[[_F], _F]:
+def func(f: _F | None = None, /, *, cls: type[FCache[Any]] | None = None) -> _F | Callable[[_F], _F]:
     if f is None:
+        if cls is None:
+            return func
         return cls().func
+    if cls is None:
+        cls = _optimal_fcache(f)
     return cls().func(f)
 
 

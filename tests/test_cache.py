@@ -48,13 +48,15 @@ class TestCache:
                 return 1
             return x * factorial(x - 1)
 
-        @func(cls=FCacheOneArg)  # We only care about one argument
+        @func()
         @count_calls
         def cfactorial(x: int, /) -> int:
             """x!, but cached."""
             if x == 0:
                 return 1
             return x * cfactorial(x - 1)
+
+        assert isinstance(FCache.get(cfactorial), FCacheOneArg)
 
         assert cfactorial(2) == factorial(2)    # cfactorial() >> cache
         assert cfactorial(1) == factorial(1)    #              << cache
@@ -90,9 +92,16 @@ class TestCache:
         assert not Cache.has(factorial)
 
     def test_func_exc(self) -> None:
-        @func(cls=FCacheNoParams)
+        @func
         def bad_func() -> NoReturn:
             raise RuntimeError("Bad func called!")
+
+        @func
+        def divide(x: int, y: int) -> float:
+            return x / y
+
+        assert isinstance(FCache.get(bad_func), FCacheNoParams)
+        assert not isinstance(FCache.get(divide), FCacheArgOnly)
 
         with pytest.raises(RuntimeError) as e1:
             # first call
@@ -101,3 +110,46 @@ class TestCache:
             # cached call
             bad_func()
         assert e1.value is e2.value
+
+        assert divide(0, 42) == 0
+
+        with pytest.raises(ZeroDivisionError) as e1:
+            # first call
+            divide(42, 0)
+        with pytest.raises(ZeroDivisionError) as e2:
+            # cached call
+            divide(42, 0)
+        assert e1.value is e2.value
+
+    def test_func_params(self) -> None:
+        @func
+        def foo(x: bool, /, *args: int) -> bool:
+            return x and all(args)
+
+        assert isinstance(FCache.get(foo), FCacheArgOnly)
+        assert foo(True, 3, 14)
+        assert not foo(True, 0)
+
+        @func
+        def bar(*, x: int = 42, **kwargs: str) -> int:
+            return x
+
+        assert isinstance(FCache.get(bar), FCacheKwOnly)
+        assert bar(foo="foo") == 42
+
+        @func(cls=FCacheNoParams)
+        def once(val: float = 3.14) -> float:
+            return val
+
+        assert once(42.) == 42.
+        assert once(3.14) == 42.
+
+        @func
+        def baz(*args: int, **kwargs: str) -> None:
+            return None
+
+        baz_cache = FCache.get(baz)
+        assert not isinstance(baz_cache, FCacheArgOnly)
+        assert not isinstance(baz_cache, FCacheKwOnly)
+        assert not isinstance(baz_cache, FCacheOneArg)
+        assert     isinstance(baz_cache, FCache)
