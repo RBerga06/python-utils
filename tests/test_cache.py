@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# mypy: ignore-errors
 """Test `rberga06.utils.cache`."""
 from __future__ import annotations
 from functools import wraps
-from typing import Callable, NoReturn, TypeVar, cast
+import os
+from typing import Any, Callable, NoReturn, TypeVar, cast, reveal_type
 import pytest
 from rberga06.utils.cache import *
-
+from testutils import flag
 
 _F = TypeVar("_F", bound=Callable[..., object])
 
@@ -73,6 +73,10 @@ class TestCache:
         # 3|   -> cfactorial(0)  >> cache
         #  | => cfactorial(1)    << cache
         assert CALLS_COUNT["cfactorial"] == 3
+        # assert cfactorial(100) == int(
+        #     "9332621544394415268169923885626670049071596826438162146859296389521759999322991"
+        #     "5608941463976156518286253697920827223758251185210916864000000000000000000000000"
+        # )
         # Test `get(...)` (ad `read(...)`)
         assert (cfactorial_cache := Cache[dict[int, int], None].get(cfactorial))
         assert cfactorial_cache.read() == {
@@ -153,3 +157,20 @@ class TestCache:
         assert not isinstance(baz_cache, FCacheKwOnly)
         assert not isinstance(baz_cache, FCacheOneArg)
         assert     isinstance(baz_cache, FCache)
+
+
+@pytest.mark.mypy_testing
+@pytest.mark.skipif(not flag("PR") not in os.environ)
+def test_fibonacci(benchmark: Any) -> None:
+    """Benchmark cached functions."""
+    @func
+    def fib(n: int) -> int:
+        """Returns the `n`th Fibonacci number."""
+        if n in (0, 1):
+            return 1
+        return fib(n - 1) + fib(n - 2)
+
+    assert benchmark(fib, 100) == 573147844013817084101
+    reveal_type(fib)  # R: def (n: builtins.int) -> builtins.int
+    with pytest.raises(TypeError):
+        fib("bad")  # E: Argument 1 to "fib" has incompatible type "str"; expected "int"

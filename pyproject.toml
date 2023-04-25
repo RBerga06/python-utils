@@ -8,25 +8,29 @@ packages = [{include = "rberga06", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-# pydantic = {version = "^2.0a1", allow-prereleases = true}
-pydantic = {git = "https://github.com/pydantic/pydantic"}
+# pydantic = {git = "https://github.com/pydantic/pydantic"}
+pydantic = {version = "^2.0a3", allow-prereleases = true}
 packaging = "^23.1"
 pyyaml = "^6.0"
 typing-extensions = "^4.5.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.3.1"
-pytest-cov = "^4.0.0"
-pytest-order = "^1.1.0"
-pytest-mypy = "^0.10.3"
 types-pyyaml = "^6.0.12.9"
+pytest = "^7.3.1"
+# pytest-order = "^1.1.0"
+pytest-cov = "^4.0.0"
+pytest-benchmark = "^4.0.0"
+pytest-mypy-testing = "^0.1.1"
 
 
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
 ]
-addopts = "--mypy --cov=rberga06.utils --cov-report term --cov-report html"
+addopts = "--cov=rberga06.utils --cov-report term --cov-report html --benchmark-autosave --durations=5"
+norecursedirs = [
+    "tests/plugins/*",
+]
 
 
 [tool.mypy]
