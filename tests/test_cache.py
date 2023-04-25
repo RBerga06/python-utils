@@ -7,7 +7,12 @@ import os
 from typing import Any, Callable, NoReturn, TypeVar, cast, reveal_type
 import pytest
 from rberga06.utils.cache import *
-from testutils import flag
+from testutils import feat
+
+
+if not feat("CACHE"):
+    pytest.skip()
+
 
 _F = TypeVar("_F", bound=Callable[..., object])
 
@@ -159,8 +164,15 @@ class TestCache:
         assert     isinstance(baz_cache, FCache)
 
 
+@pytest.mark.skip(reason="Mypy doesn't support (yet) PEP 695 & PEP 696")
 @pytest.mark.mypy_testing
-@pytest.mark.skipif(not flag("PR") not in os.environ)
+def test_mypy() -> None:
+    x: Any = 42
+    if Cache[int].has(x):  # type: ignore
+        x.__cache__
+
+
+@pytest.mark.mypy_testing
 def test_fibonacci(benchmark: Any) -> None:
     """Benchmark cached functions."""
     @func
