@@ -7,6 +7,10 @@ import weakref
 from pydantic import BaseModel
 import pytest
 from rberga06.utils.types import *
+from testutils import module_requires_feat
+
+
+module_requires_feat("OTHER")
 
 
 class TestVersion:

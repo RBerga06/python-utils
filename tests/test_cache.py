@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# mypy: ignore-errors
 """Test `rberga06.utils.cache`."""
 from __future__ import annotations
 from functools import wraps
-import os
-from typing import Any, Callable, NoReturn, TypeVar, cast, reveal_type
+from time import sleep
+from typing import Any, Callable, NoReturn, TypeVar, cast
 import pytest
 from rberga06.utils.cache import *
-from testutils import feat
+from testutils import module_requires_feat
 
 
-if not feat("CACHE"):
-    pytest.skip()
+module_requires_feat("CACHE")
 
 
 _F = TypeVar("_F", bound=Callable[..., object])
@@ -172,17 +172,27 @@ def test_mypy() -> None:
         x.__cache__
 
 
-@pytest.mark.mypy_testing
-def test_fibonacci(benchmark: Any) -> None:
-    """Benchmark cached functions."""
-    @func
-    def fib(n: int) -> int:
-        """Returns the `n`th Fibonacci number."""
-        if n in (0, 1):
-            return 1
-        return fib(n - 1) + fib(n - 2)
+@func
+def f(x: float, /) -> float:
+    sleep(x)
+    return x
 
-    assert benchmark(fib, 100) == 573147844013817084101
-    reveal_type(fib)  # R: def (n: builtins.int) -> builtins.int
-    with pytest.raises(TypeError):
-        fib("bad")  # E: Argument 1 to "fib" has incompatible type "str"; expected "int"
+
+N =   5  # Number of benchmarks for each function
+M = .01  # Maximum run time for f
+
+
+class TestBenchmarks:
+    """Run benchmarks."""
+
+    @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
+    def test_run1(self, time: float, benchmark: Any) -> None:
+        """Benchmark first run of a cached function."""
+        assert time not in FCacheOneArg.get(f).read()
+        benchmark(f, time)
+
+    @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
+    def test_run2(self, time: float, benchmark: Any) -> None:
+        """Benchmark the second run of a cached function."""
+        assert time in FCacheOneArg.get(f).read()
+        benchmark(f, time)
