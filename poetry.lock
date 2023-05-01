@@ -310,36 +310,6 @@ files = [
 ]
 
 [[package]]
-name = "pygal"
-version = "3.0.0"
-description = "A Python svg graph plotting library"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pygal-3.0.0-py2.py3-none-any.whl", hash = "sha256:9ae06e32dec1422f9cd0d606fe2728f78e0b5d644551137480d8d5806e2426f0"},
-    {file = "pygal-3.0.0.tar.gz", hash = "sha256:2923f95d2e515930aa5a997219dccefbf3d92b7eaf5fc1c9febb95b09935fdb2"},
-]
-
-[package.extras]
-docs = ["pygal-sphinx-directives", "sphinx", "sphinx-rtd-theme"]
-lxml = ["lxml"]
-png = ["cairosvg"]
-test = ["cairosvg", "coveralls", "flask", "lxml", "pygal-maps-ch", "pygal-maps-fr", "pygal-maps-world", "pyquery", "pytest", "pytest-cov", "pytest-flake8", "pytest-isort", "pytest-runner"]
-
-[[package]]
-name = "pygaljs"
-version = "1.0.2"
-description = "Python package providing assets from https://github.com/Kozea/pygal.js"
-category = "dev"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pygaljs-1.0.2-py2.py3-none-any.whl", hash = "sha256:d75e18cb21cc2cda40c45c3ee690771e5e3d4652bf57206f20137cf475c0dbe8"},
-    {file = "pygaljs-1.0.2.tar.gz", hash = "sha256:0b71ee32495dcba5fbb4a0476ddbba07658ad65f5675e4ad409baf154dec5111"},
-]
-
-[[package]]
 name = "pytest"
 version = "7.3.1"
 description = "pytest: simple powerful testing with Python"
@@ -374,8 +344,6 @@ files = [
 
 [package.dependencies]
 py-cpuinfo = "*"
-pygal = {version = "*", optional = true, markers = "extra == \"histogram\""}
-pygaljs = {version = "*", optional = true, markers = "extra == \"histogram\""}
 pytest = ">=3.8"
 
 [package.extras]
@@ -495,4 +463,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "5e2b0a9aff829858fc991e5a7ea18b43859328e998021966e68c6cc1a40d2d2b"
+content-hash = "55c6a565905da429564aa5a1cc99da939ac59698ff8fe93bad035fd70d18e315"
