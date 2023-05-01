@@ -31,8 +31,8 @@ addopts = """\
     --cov=rberga06.utils \
     --cov-report term \
     --cov-report html \
-    --benchmark-autosave \
 """
+#   --benchmark-autosave \
 norecursedirs = [
     "tests/plugins/*",
 ]
