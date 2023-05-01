@@ -19,7 +19,7 @@ types-pyyaml = "^6.0.12.9"
 pytest = "^7.3.1"
 pytest-cov = "^4.0.0"
 pytest-mypy-testing = "^0.1.1"
-pytest-benchmark = "^4.0.0"
+# pytest-benchmark = "^4.0.0"
 
 
 [tool.pytest.ini_options]
