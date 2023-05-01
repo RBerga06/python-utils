@@ -28,7 +28,6 @@ s: System[_TestPluginSystemFeatures]
 
 
 class TestPluginSystem:
-    @pytest.mark.order(1)
     def test_sys_init(self) -> None:
         global s
         s = System(
@@ -44,7 +43,6 @@ class TestPluginSystem:
         with pytest.raises(ValueError):
             s.extend_path_pkg("os")
 
-    @pytest.mark.order(2)
     @pytest.mark.parametrize("spec", [
          "rberga06.utils.<tests>",
          "rberga06.utils.<tests> v1.0.0",
@@ -56,7 +54,6 @@ class TestPluginSystem:
     def test_compat_passes(self, spec: str) -> None:
         assert s.compat_eval(spec)
 
-    @pytest.mark.order(3)
     @pytest.mark.parametrize("spec", [
          "unsupported.plugin.system",
          "rberga06.utils.<tests> v3.1.4",
@@ -67,7 +64,6 @@ class TestPluginSystem:
     def test_compat_fails(self, spec: str) -> None:
         assert not s.compat_eval(spec)
 
-    @pytest.mark.order(4)
     def test_read_static(self) -> None:
         plugins = Path(__file__).parent/"plugins"
         hello = Spec.read(plugins/"hello/.plugin.yml")
@@ -78,7 +74,6 @@ class TestPluginSystem:
         with pytest.raises(RuntimeError):
             s.compat_ensure(error)
 
-    @pytest.mark.order(5)
     def test_discover(self) -> None:
         assert {*s.discover_all().plugins.keys()} == {
             "hello", "hello-pkg", "err-feature",
@@ -86,7 +81,6 @@ class TestPluginSystem:
         # re-run the discovery: already-discovered plugins will be used
         assert s.plugins == s.discover_all().plugins
 
-    @pytest.mark.order(6)
     def test_hello(self) -> None:
         hello = s.plugins["hello"]
         assert hello.feat.hello._() == "Hello, World!"
@@ -98,7 +92,6 @@ class TestPluginSystem:
         from rberga06.utils.tests.plugins.hello import hello as orig  # type: ignore
         assert hello.feat.hello._ is orig
 
-    @pytest.mark.order(7)
     def test_hello_pkg(self) -> None:
         pkg = s.plugins["hello-pkg"]
         assert pkg.feat.hello._() == "Hello, World!"
@@ -110,7 +103,6 @@ class TestPluginSystem:
         from rberga06.utils.tests.plugins.hello_pkg import hello as orig  # type: ignore
         assert pkg.feat.hello._ is orig
 
-    @pytest.mark.order(8)
     def test_errors(self) -> None:
         assert "err-malformed" not in s.plugins
         assert "err-compat" not in s.plugins
