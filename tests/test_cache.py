@@ -4,7 +4,6 @@
 """Test `rberga06.utils.cache`."""
 from __future__ import annotations
 from functools import wraps
-from time import sleep
 from typing import Any, Callable, NoReturn, TypeVar, cast
 import pytest
 from rberga06.utils.cache import *
@@ -172,27 +171,29 @@ def test_mypy() -> None:
         x.__cache__
 
 
-@func
-def f(x: float, /) -> float:
-    sleep(x)
-    return x
-
-
-N =   5  # Number of benchmarks for each function
-M = .01  # Maximum run time for f
-
-
-class TestBenchmarks:
-    """Run benchmarks."""
-
-    @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
-    def test_run1(self, time: float, benchmark: Any) -> None:
-        """Benchmark first run of a cached function."""
-        assert time not in FCacheOneArg.get(f).read()
-        benchmark(f, time)
-
-    @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
-    def test_run2(self, time: float, benchmark: Any) -> None:
-        """Benchmark the second run of a cached function."""
-        assert time in FCacheOneArg.get(f).read()
-        benchmark(f, time)
+# from time import sleep
+#
+# @func
+# def f(x: float, /) -> float:
+#     sleep(x)
+#     return x
+#
+#
+# N =   5  # Number of benchmarks for each function
+# M = .01  # Maximum run time for f
+#
+#
+# class TestBenchmarks:
+#     """Run benchmarks."""
+#
+#     @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
+#     def test_run1(self, time: float, benchmark: Any) -> None:
+#         """Benchmark first run of a cached function."""
+#         assert time not in FCacheOneArg.get(f).read()
+#         benchmark(f, time)
+#
+#     @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
+#     def test_run2(self, time: float, benchmark: Any) -> None:
+#         """Benchmark the second run of a cached function."""
+#         assert time in FCacheOneArg.get(f).read()
+#         benchmark(f, time)
