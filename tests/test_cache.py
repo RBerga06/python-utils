@@ -4,9 +4,13 @@
 """Test `rberga06.utils.cache`."""
 from __future__ import annotations
 from functools import wraps
-from typing import Callable, NoReturn, TypeVar, cast
+from typing import Any, Callable, NoReturn, TypeVar, cast
 import pytest
 from rberga06.utils.cache import *
+from testutils import module_requires_feat
+
+
+module_requires_feat("CACHE")
 
 
 _F = TypeVar("_F", bound=Callable[..., object])
@@ -73,6 +77,10 @@ class TestCache:
         # 3|   -> cfactorial(0)  >> cache
         #  | => cfactorial(1)    << cache
         assert CALLS_COUNT["cfactorial"] == 3
+        # assert cfactorial(100) == int(
+        #     "9332621544394415268169923885626670049071596826438162146859296389521759999322991"
+        #     "5608941463976156518286253697920827223758251185210916864000000000000000000000000"
+        # )
         # Test `get(...)` (ad `read(...)`)
         assert (cfactorial_cache := Cache[dict[int, int], None].get(cfactorial))
         assert cfactorial_cache.read() == {
@@ -153,3 +161,39 @@ class TestCache:
         assert not isinstance(baz_cache, FCacheKwOnly)
         assert not isinstance(baz_cache, FCacheOneArg)
         assert     isinstance(baz_cache, FCache)
+
+
+@pytest.mark.skip(reason="Mypy doesn't support (yet) PEP 695 & PEP 696")
+@pytest.mark.mypy_testing
+def test_mypy() -> None:
+    x: Any = 42
+    if Cache[int].has(x):  # type: ignore
+        x.__cache__
+
+
+# from time import sleep
+#
+# @func
+# def f(x: float, /) -> float:
+#     sleep(x)
+#     return x
+#
+#
+# N =   5  # Number of benchmarks for each function
+# M = .01  # Maximum run time for f
+#
+#
+# class TestBenchmarks:
+#     """Run benchmarks."""
+#
+#     @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
+#     def test_run1(self, time: float, benchmark: Any) -> None:
+#         """Benchmark first run of a cached function."""
+#         assert time not in FCacheOneArg.get(f).read()
+#         benchmark(f, time)
+#
+#     @pytest.mark.parametrize("time", [x*M/N for x in range(1, N + 1)])
+#     def test_run2(self, time: float, benchmark: Any) -> None:
+#         """Benchmark the second run of a cached function."""
+#         assert time in FCacheOneArg.get(f).read()
+#         benchmark(f, time)

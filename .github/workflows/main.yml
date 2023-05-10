@@ -24,6 +24,7 @@ jobs:
         python: [ "3.11" ]  # python: [ "3.11", "3.12.0-alpha.7" ]
     runs-on: ${{matrix.os}}-latest
     steps:
+    # Setup
     - uses: actions/checkout@v3
     - name: Set up Python ${{matrix.python}}
       uses: actions/setup-python@v3
@@ -33,6 +34,20 @@ jobs:
       run: pip install poetry
     - name: Editable install
       run: poetry install --with=dev
+    # Set environment variables
+    - name: Env (FEAT_ALL)
+      run: echo "FEAT_ALL=1" >> $GITHUB_ENV
+      if: contains(github.event.pull_request.labels.*.name, 'feat:all')
+    - name: Env (FEAT_CACHE)
+      run: echo "FEAT_CACHE=1" >> $GITHUB_ENV
+      if: contains(github.event.pull_request.labels.*.name, 'feat:cache')
+    - name: Env (FEAT_PLUGINS)
+      run: echo "FEAT_PLUGINS=1" >> $GITHUB_ENV
+      if: contains(github.event.pull_request.labels.*.name, 'feat:plugins')
+    - name: Env (FEAT_OTHER)
+      run: echo "FEAT_OTHER=1" >> $GITHUB_ENV
+      if: contains(github.event.pull_request.labels.*.name, 'feat:other')
+    # Test
     - name: Test
       run: poetry run pytest
 

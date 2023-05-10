@@ -82,7 +82,7 @@ def absolutize_obj_name(name: str, root: str) -> str:
     ]).removesuffix(":")
 
 
-_PYTHON_INVALID_CHARS = "-+*/\\!:@{}[]().?'\"\n\t #"
+_PYTHON_INVALID_CHARS = "=-+*/%&|^<>:;,.@{}[]()!?'\\\"\n\r\t #$"
 
 
 def pythonize(id: str, /, *, ignore: Iterable[str] = "") -> str:
