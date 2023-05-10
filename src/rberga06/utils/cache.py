@@ -39,6 +39,7 @@ class Cache(Generic[_T, _U]):
         else:
             self._ = _
 
+    @override  # from builtins.object
     def __repr__(self) -> str:
         return f"<Cache: {self._!r}>"
 
@@ -116,6 +117,7 @@ _K = TypeVar(
 class FCache(Cache[dict[_K, tuple[object, bool]], dict[_K, tuple[object, bool]]]):
     """Function cache."""
 
+    @override  # from Cache
     @classmethod
     def default(cls) -> dict[_K, tuple[object, bool]]:
         return {}
@@ -150,7 +152,7 @@ class FCache(Cache[dict[_K, tuple[object, bool]], dict[_K, tuple[object, bool]]]
 class FCacheNoParams(FCache[None]):
     """A function cache that ignores `*args` and `**kwargs`."""
 
-    @override
+    @override  # from FCache
     def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> None:
         return None
 
@@ -158,7 +160,7 @@ class FCacheNoParams(FCache[None]):
 class FCacheKwOnly(FCache[frozenset[tuple[str, object]]]):
     """A function cache that ignores `*args`."""
 
-    @override
+    @override  # from FCache
     def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> frozenset[tuple[str, object]]:
         return frozenset(kwargs.items())
 
@@ -166,7 +168,7 @@ class FCacheKwOnly(FCache[frozenset[tuple[str, object]]]):
 class FCacheArgOnly(FCache[tuple[object, ...]]):
     """A function cache that ignores `**kwargs`."""
 
-    @override
+    @override  # from FCache
     def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> tuple[object, ...]:
         return args
 
@@ -174,7 +176,7 @@ class FCacheArgOnly(FCache[tuple[object, ...]]):
 class FCacheOneArg(FCache[object]):
     """A function cache that only checks the first positional argument."""
 
-    @override
+    @override  # from FCache
     def _freeze_params(self, args: tuple[object, ...], kwargs: dict[str, object], /) -> object:
         return args[0]
 
