@@ -4,5 +4,8 @@
         "--no-cov"
     ],
     "python.analysis.typeCheckingMode": "strict",
-    "python.linting.mypyEnabled": true
+    "python.linting.mypyEnabled": true,
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportImplicitOverride": "warning",
+    },
 }
