@@ -2,31 +2,28 @@
 # -*- codinig: utf-8 -*-
 """Useful types."""
 from __future__ import annotations
-from typing import Callable, Generic, Literal, TypeVar, cast, overload
+from typing import Any, Callable, Generic, Literal, TypeVar, cast, overload
 import weakref
 from packaging.version import Version as _Version
-from pydantic import ValidationInfo
-from pydantic_core.core_schema import PlainValidatorFunctionSchema
+from pydantic_core import core_schema
 
 
 class Version(_Version):
     # pydantic(v2)-compatible packaging.version.Version
 
     @staticmethod
-    def validate(obj: str | Version, info: ValidationInfo, /) -> Version:
+    def validate(obj: str | Version, /) -> Version:
         if isinstance(obj, Version):
             return obj
         else:
             return Version(obj)
 
-    # See https://docs.pydantic.dev/blog/pydantic-v2/#changes-to-custom-field-types
-    __pydantic_core_schema__: PlainValidatorFunctionSchema = {
-        "type": "function-plain",
-        "function": {
-            "type": "general",
-            "function": validate,
-        },
-    }
+    @classmethod
+    def __get_pydantic_core_schema__(cls, *args: Any, **kwargs: Any) -> core_schema.PlainValidatorFunctionSchema:
+        # See https://github.com/pydantic/pydantic/issues/5373
+        return core_schema.no_info_plain_validator_function(
+            cls.validate, serialization=core_schema.to_string_ser_schema()
+        )
 
 
 _T = TypeVar("_T")
@@ -67,20 +64,18 @@ class ref(Generic[_T]):
         return isinstance(self.inner, weakref.ref)
 
     @staticmethod
-    def validate(obj: ref[_T] | weakref.ref[_T] | _T, info: ValidationInfo, /) -> ref[_T]:
+    def validate(obj: ref[_T] | weakref.ref[_T] | _T, /) -> ref[_T]:
         if isinstance(obj, ref):
             return cast(ref[_T], obj)
         else:
             return ref(obj)
 
-    # See https://docs.pydantic.dev/blog/pydantic-v2/#changes-to-custom-field-types
-    __pydantic_core_schema__: PlainValidatorFunctionSchema = {
-        "type": "function-plain",
-        "function": {
-            "type": "general",
-            "function": validate,
-        },
-    }
+    @classmethod
+    def __get_pydantic_core_schema__(cls, *args: Any, **kwargs: Any) -> core_schema.PlainValidatorFunctionSchema:
+        # See https://github.com/pydantic/pydantic/issues/5373
+        return core_schema.no_info_plain_validator_function(
+            cls.validate, serialization=core_schema.to_string_ser_schema()
+        )
 
 
 _A = TypeVar("_A")

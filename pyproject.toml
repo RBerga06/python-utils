@@ -9,7 +9,7 @@ packages = [{include = "rberga06", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 # pydantic = {git = "https://github.com/pydantic/pydantic"}
-pydantic = {version = "^2.0a3", allow-prereleases = true}
+pydantic = {version = "^2.0a4", allow-prereleases = true}
 packaging = "^23.1"
 pyyaml = "^6.0"
 typing-extensions = "^4.5.0"
