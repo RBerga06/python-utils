@@ -2,7 +2,7 @@
 # -*- codinig: utf-8 -*-
 """Useful types."""
 from __future__ import annotations
-from typing import Generic, Literal, TypeVar, cast, overload
+from typing import Callable, Generic, Literal, TypeVar, cast, overload
 import weakref
 from packaging.version import Version as _Version
 from pydantic import ValidationInfo
@@ -81,6 +81,34 @@ class ref(Generic[_T]):
             "function": validate,
         },
     }
+
+
+_A = TypeVar("_A")
+_B = TypeVar("_B")
+
+
+class ItemFunc(Generic[_A, _B]):
+    """Similar to a (_A, ) -> _B function, but called via [...] instead of (...)."""
+    __slots__ = ("__wrapped__", )
+    __wrapped__: Callable[[_A], _B]
+
+    def __init__(self, func: Callable[[_A], _B], /) -> None:
+        self.__wrapped__ = func
+
+    def __getitem__(self, item: _A, /) -> _B:
+        return self.__wrapped__(item)
+
+
+class AttrFunc(Generic[_T]):
+    """Similar to a (str, ) -> _T function but called via attribute access instead of (...)."""
+    __slots__ = ("__wrapped__", )
+    __wrapped__: Callable[[str], _T]
+
+    def __init__(self, func: Callable[[str], _T], /) -> None:
+        self.__wrapped__ = func
+
+    def __getattr__(self, item: str, /) -> _T:
+        return self.__wrapped__(item)
 
 
 __all__ = [
