@@ -3,32 +3,41 @@
 # mypy: ignore-errors
 """Useful types."""
 from __future__ import annotations
-from typing import Any, Callable, Generic, Literal, TypeVar, cast, overload
-from typing_extensions import override
+from typing import Any, Callable, Generic, Literal, Protocol, Self, cast, overload
+from typing_extensions import override, TypeVar
 import weakref
 from packaging.version import Version as _Version
 from pydantic_core import core_schema
 
 
-class Version(_Version):
-    # pydantic(v2)-compatible packaging.version.Version
+_T = TypeVar("_T", infer_variance=True)
 
-    @staticmethod
-    def validate(obj: str | Version, /) -> Version:
-        if isinstance(obj, Version):
-            return obj
-        else:
-            return Version(obj)
+
+class SupportsPydanticV2(Protocol[_T]):
+    """A protocol that makes it easy to implement pydantic v2 support."""
+
+    @classmethod
+    def validate(cls, obj: _T, /) -> Self: ...
 
     @classmethod
     def __get_pydantic_core_schema__(cls, *args: Any, **kwargs: Any) -> core_schema.PlainValidatorFunctionSchema:
         # See https://github.com/pydantic/pydantic/issues/5373
         return core_schema.no_info_plain_validator_function(
-            cls.validate, serialization=core_schema.to_string_ser_schema()
+            lambda _: cls.validate(_), serialization=core_schema.to_string_ser_schema()
         )
 
 
-_T = TypeVar("_T")
+
+class Version(_Version, SupportsPydanticV2["str | Version"]):
+    # pydantic(v2)-compatible packaging.version.Version
+
+    @classmethod
+    @override   # from SupportsPydanticV2
+    def validate(cls, obj: str | Version, /) -> Self:
+        if isinstance(obj, Version):
+            return obj
+        else:
+            return Version(obj)
 
 
 class Mut(Generic[_T]):
@@ -57,7 +66,7 @@ class Mut(Generic[_T]):
         return f"Mut({self.value!r})"
 
 
-class ref(Generic[_T]):
+class ref(Generic[_T], SupportsPydanticV2["ref[_T] | weakref.ref[_T] | _T"]):
     """Flexible, static reference (can be either a weak or a strong reference)."""
     __slots__ = ("inner",)
 
@@ -91,19 +100,13 @@ class ref(Generic[_T]):
         """Check if `self` is a weak reference."""
         return isinstance(self.inner, weakref.ref)
 
-    @staticmethod
-    def validate(obj: ref[_T] | weakref.ref[_T] | _T, /) -> ref[_T]:
+    @classmethod
+    @override   # from SupportsPydanticV2
+    def validate(cls, obj: ref[_T] | weakref.ref[_T] | _T, /) -> ref[_T]:
         if isinstance(obj, ref):
             return cast(ref[_T], obj)
         else:
             return ref(obj)
-
-    @classmethod
-    def __get_pydantic_core_schema__(cls, *args: Any, **kwargs: Any) -> core_schema.PlainValidatorFunctionSchema:
-        # See https://github.com/pydantic/pydantic/issues/5373
-        return core_schema.no_info_plain_validator_function(
-            cls.validate, serialization=core_schema.to_string_ser_schema()
-        )
 
 
 _A = TypeVar("_A")
