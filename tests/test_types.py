@@ -28,7 +28,11 @@ class TestVersion:
 class Foo: ...
 
 
-class TestRef:
+class TestRefAndMut:
+    def _test_mut(self, obj: object) -> None:
+        m = Mut(obj)
+        assert m.get() is m._ is m.value is obj
+
     def _test_ref(self, obj: object, weak: bool) -> None:
         r = ref(obj)
         assert r.is_weak == weak
@@ -38,19 +42,20 @@ class TestRef:
         else:
             assert r._ is r() is obj
 
-    def test_ref(self) -> None:
-        for obj, weak_allowed in (
-            (42, False),
-            ([42], False),
-            (Foo, True),
-            (Foo(), True),
-        ):
-            self._test_ref(obj, False)
-            if weak_allowed:
-                self._test_ref(weakref.ref(obj), True)
-            else:
-                with pytest.raises(TypeError):
-                    ref[object](weakref.ref(obj))
+    @pytest.mark.parametrize("obj,weak_allowed", (
+        (42, False),
+        ([42], False),
+        (Foo, True),
+        (Foo(), True),
+    ))
+    def test_ref(self, obj: object, weak_allowed: bool) -> None:
+        self._test_mut(obj)
+        self._test_ref(obj, False)
+        if weak_allowed:
+            self._test_ref(weakref.ref(obj), True)
+        else:
+            with pytest.raises(TypeError):
+                ref[object](weakref.ref(obj))
 
     def test_empty(self) -> None:
         foo = Foo()
