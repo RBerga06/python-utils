@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- codinig: utf-8 -*-
+# mypy: ignore-errors
 """Useful types."""
 from __future__ import annotations
 from typing import Any, Callable, Generic, Literal, TypeVar, cast, overload
+from typing_extensions import override
 import weakref
 from packaging.version import Version as _Version
 from pydantic_core import core_schema
@@ -27,6 +29,32 @@ class Version(_Version):
 
 
 _T = TypeVar("_T")
+
+
+class Mut(Generic[_T]):
+    """Flexible, static, mutable strong reference to a value."""
+    __slots__ = ("value", )
+    value: _T
+
+    def __init__(self, value: _T, /) -> None:
+        self.value = value
+
+    def get(self) -> _T:
+        return self.value
+
+    def set(self, value: _T, /) -> None:
+        self.value = value
+
+    @property
+    def _(self) -> _T:
+        return self.value
+    @_.setter
+    def _(self, _: _T) -> None:
+        self.set(_)
+
+    @override  # from builtins.object
+    def __repr__(self) -> str:
+        return f"Mut({self.value!r})"
 
 
 class ref(Generic[_T]):
@@ -107,5 +135,5 @@ class AttrFunc(Generic[_T]):
 
 
 __all__ = [
-    "Version", "ref",
+    "Version", "Mut", "ref", "ItemFunc", "AttrFunc",
 ]
