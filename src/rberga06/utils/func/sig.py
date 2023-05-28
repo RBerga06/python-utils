@@ -4,7 +4,7 @@
 """Useful decorators for modifying function signatures."""
 from __future__ import annotations
 from contextlib import suppress
-from inspect import Parameter, Signature as Sig, signature
+from inspect import Parameter, Signature, signature
 from typing import Concatenate as Concat, overload
 from typing import Any, Callable as Fn, Generic, ParamSpec, Self, TypeVar, cast, final
 
@@ -22,10 +22,10 @@ _T3 = TypeVar("_T3")
 class SigHelper(Generic[_F]):
     """Signature editing helper."""
     __slots__ = ("_sig", "_runtime")
-    _sig: Sig
+    _sig: Signature
     _runtime: bool
 
-    def __init__(self, sig: Sig, runtime: bool = True):
+    def __init__(self, sig: Signature, runtime: bool = True):
         self._sig = sig
         self._runtime = runtime
 
