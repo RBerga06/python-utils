@@ -2,9 +2,14 @@
 # -*- coding: utf-8 -*-
 """Utilities for distribution data access."""
 from pathlib import Path
-from typing import ContextManager, NamedTuple
+from typing import ContextManager, NamedTuple, TypeVar
 import importlib.resources
 import importlib.metadata
+from packaging.requirements import Requirement
+from .deps import dependency, DepsEnum
+
+
+_E = TypeVar("_E", bound=type[DepsEnum])
 
 
 class about(NamedTuple):
@@ -28,6 +33,21 @@ class about(NamedTuple):
     def path(self, child: str) -> ContextManager[Path]:
         """Get the `Path` of `child` in this distribution."""
         return importlib.resources.as_file(importlib.resources.files(self.pkg) / child)
+
+    def deps(self) -> dict[str, dependency]:
+        """Get infos about all dependencies."""
+        return {
+            (req := Requirement(info)).name: dependency(req.name, str(req.specifier))
+            for info in (importlib.metadata.requires(self.name) or [])
+        }
+
+    def dep(self, name: str, /) -> dependency:
+        """Get infos about this dependency."""
+        return self.deps()[name]
+
+    def deps_enum(self, enum: _E) -> _E:
+        enum.register(self)
+        return enum
 
 
 __all__ = [
