@@ -44,6 +44,9 @@ jobs:
     - name: Env (FEAT_PLUGINS)
       run: echo "FEAT_PLUGINS=1" >> $GITHUB_ENV
       if: contains(github.event.pull_request.labels.*.name, 'feat:plugins')
+    - name: Env (FEAT_FUNC)
+      run: echo "FEAT_FUNC=1" >> $GITHUB_ENV
+      if: contains(github.event.pull_request.labels.*.name, 'feat:func')
     - name: Env (FEAT_OTHER)
       run: echo "FEAT_OTHER=1" >> $GITHUB_ENV
       if: contains(github.event.pull_request.labels.*.name, 'feat:other')
