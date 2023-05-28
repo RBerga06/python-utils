@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# mypy: ignore-errors
 """Test `rberga06.utils.types`"""
 from __future__ import annotations
 from typing import cast
@@ -32,6 +33,9 @@ class TestRefAndMut:
     def _test_mut(self, obj: object) -> None:
         m = Mut(obj)
         assert m.get() is m._ is m.value is obj
+        m._ = 314
+        assert m._ == 314
+        assert repr(m) == f"Mut({m._!r})"
 
     def _test_ref(self, obj: object, weak: bool) -> None:
         r = ref(obj)
