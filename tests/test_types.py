@@ -8,10 +8,10 @@ import weakref
 from pydantic import BaseModel
 import pytest
 from rberga06.utils.types import *
-from testutils import TestFeat
+from testutils import TestingFeat
 
 
-TestFeat.OTHER.required()
+TestingFeat.OTHER.required()
 
 
 class TestVersion:

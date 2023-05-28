@@ -29,7 +29,7 @@ class _FeatBase(StrEnum):
         return module_requires_feat(self)
 
 
-class TestFeat(_FeatBase):
+class TestingFeat(_FeatBase):
     # Known testing features
     CACHE   = auto()
     PLUGIN  = auto()

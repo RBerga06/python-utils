@@ -4,9 +4,9 @@ from __future__ import annotations
 from pathlib import Path
 import pytest
 from rberga06.utils.imports import *
-from testutils import TestFeat
+from testutils import TestingFeat
 
-TestFeat.OTHER.required()
+TestingFeat.OTHER.required()
 
 
 class TestPythonize:

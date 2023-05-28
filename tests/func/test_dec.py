@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tests for `rberga06.utils.func.dec`."""
-from ..testutils import TestFeat
+from ..testutils import TestingFeat
 
-TestFeat.FUNC.required()
+TestingFeat.FUNC.required()

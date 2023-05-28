@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """Tests for `rberga06.utils.func.sig`."""
 from rberga06.utils.func.sig import sig
-from ..testutils import TestFeat
+from ..testutils import TestingFeat
 
-TestFeat.FUNC.required()
+TestingFeat.FUNC.required()
 
 
 def foo(x: int, /, y: bool = True, *, z: list[str] | None = None) -> str:
