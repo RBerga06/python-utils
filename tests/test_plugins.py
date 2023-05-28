@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# mypy: ignore-errors
 """Test the plugin system."""
 from __future__ import annotations
 from pathlib import Path
@@ -9,10 +10,9 @@ from pydantic import ValidationError
 import pytest
 from rberga06.utils.types import ref
 from rberga06.utils.plugin import *
-from testutils import module_requires_feat
+from testutils import TestFeat
 
-
-module_requires_feat("PLUGINS")
+TestFeat.PLUGIN.required()
 
 
 class _Hello(Protocol):
