@@ -4,8 +4,8 @@
 """Useful decorators for modifying function signatures."""
 from __future__ import annotations
 from contextlib import suppress
-from inspect import Parameter, Signature as Sig, signature
-from typing import Concatenate as Concat, NamedTuple, overload
+from inspect import Parameter, Signature, signature
+from typing import Concatenate as Concat, overload
 from typing import Any, Callable as Fn, Generic, ParamSpec, Self, TypeVar, cast, final
 
 
@@ -19,11 +19,15 @@ _T3 = TypeVar("_T3")
 
 
 @final
-class SigHelper(NamedTuple, Generic[_F]):
+class SigHelper(Generic[_F]):
     """Signature editing helper."""
     __slots__ = ("_sig", "_runtime")
-    _sig: Sig
-    _runtime: bool = True
+    _sig: Signature
+    _runtime: bool
+
+    def __init__(self, sig: Signature, runtime: bool = True):
+        self._sig = sig
+        self._runtime = runtime
 
     def __call__(self, func: Fn[..., Any]) -> _F:
         """Apply this signature to `func`."""
@@ -41,6 +45,10 @@ class SigHelper(NamedTuple, Generic[_F]):
     def runtime(self) -> Self:
         """Also use this on runtime."""
         return SigHelper(self._sig, True)
+
+    def setruntime(self, runtime: bool, /) -> Self:
+        """Set if this should be used on runtime."""
+        return SigHelper(self._sig, runtime)
 
     @overload
     def prepend(self: SigHelper[Fn[_P, _R]], param: type[_T1], /) -> SigHelper[Fn[Concat[_T1, _P], _R]]: ...
