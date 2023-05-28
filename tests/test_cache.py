@@ -7,9 +7,9 @@ from functools import wraps
 from typing import Any, Callable, NoReturn, TypeVar, cast
 import pytest
 from rberga06.utils.cache import *
-from testutils import TestingFeat
+from .testutils import Feat
 
-TestingFeat.CACHE.required()
+Feat.CACHE.required()
 
 
 _F = TypeVar("_F", bound=Callable[..., object])

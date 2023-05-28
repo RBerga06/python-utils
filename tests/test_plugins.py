@@ -10,9 +10,9 @@ from pydantic import ValidationError
 import pytest
 from rberga06.utils.types import ref
 from rberga06.utils.plugin import *
-from testutils import TestingFeat
+from .testutils import Feat
 
-TestingFeat.PLUGIN.required()
+Feat.PLUGIN.required()
 
 
 class _Hello(Protocol):
