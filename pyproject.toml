@@ -12,7 +12,7 @@ python = "^3.11"
 pydantic = {version = "^2.0a4", allow-prereleases = true}
 packaging = "^23.1"
 pyyaml = "^6.0"
-typing-extensions = "^4.5.0"
+typing-extensions = "^4.6.2"
 
 [tool.poetry.group.dev.dependencies]
 types-pyyaml = "^6.0.12.10"
