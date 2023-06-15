@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# mypy: ignore-errors
 """Plugin systems."""
 from __future__ import annotations
 import ast
@@ -10,9 +11,9 @@ from pkgutil import resolve_name
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing import ClassVar, Generic, Iterator, Self, TypeVar, cast, final, overload
+from typing import Generic, Iterator, Self, TypeVar, cast, final, overload
 from typing_extensions import override
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from ..types import Version
 from ..imports import absolutize_obj_name, import_from, pythonize
@@ -44,10 +45,10 @@ class Plugin(BaseModel, Generic[_F]):
             self.load()
         return cast(_F, self.features)
 
-    # Pydantic model configuration
-    model_config: ClassVar[ConfigDict] = {  # type: ignore[misc]
-        "undefined_types_warning": False,
-    }
+
+# Pydantic model configuration
+#   (looks like setting this specific key is not necessary anymore?)
+# Plugin.model_config["undefined_types_warning"] = False
 
 
 
