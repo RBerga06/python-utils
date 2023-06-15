@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "rberga06-utils"
 version = "0.0.1.dev2"
-description = ""
+description = "Useful utilities for Python projects."
 authors = ["RBerga06 <78449715+RBerga06@users.noreply.github.com>"]
 readme = "README.md"
 packages = [{include = "rberga06", from = "src" }]
