@@ -190,7 +190,8 @@ class System(BaseModel, Generic[_F]):
 
 
 # `System` was defined after `Plugin`
-Plugin.model_rebuild(force=True)
+#   (looks like this is not required anymore?)
+# Plugin.model_rebuild(force=True)
 
 
 __all__ = [
