@@ -5,8 +5,8 @@
 # Inspired by the `wrapt` library (but better)
 from contextlib import suppress
 from inspect import signature
-from typing import Any, Callable as Fn, ParamSpec, Protocol, cast, overload
-from typing_extensions import TypeVar
+from typing import Any, Callable as Fn, cast, overload
+from typing_extensions import ParamSpec, Protocol, TypeVar
 from ..types import Mut
 from .wrap import wraps
 
@@ -16,6 +16,7 @@ _R = TypeVar("_R", infer_variance=True)
 _T = TypeVar("_T", infer_variance=True)
 _X = TypeVar("_X", infer_variance=True, default=dict[str, Any])
 _F = TypeVar("_F", infer_variance=True, bound=Fn[..., Any], default=Fn[..., Any])
+_G = TypeVar("_G", infer_variance=True, bound=Fn[..., Any], default=_F)  # In theory, `bound=_F`
 # Type aliases
 Decorator = Fn[[_T], _T]
 DecoratorFactory = Fn[_P, Decorator[_F]]
@@ -47,7 +48,7 @@ class DecoratorSpecWithData(Protocol[_F, _X]):
     """A decorator with data associated to each decorated function."""
     @overload
     def __call__(
-        self: "DecoratorSpec[Fn[_P, _R]]",
+        self: "DecoratorSpecWithData[Fn[_P, _R], _X]",
         __data__: _X,
         __decorated__: Fn[_P, _R],
         *args: _P.args, **kwargs: _P.kwargs,
@@ -68,21 +69,21 @@ def _mkdata(factory: DataFactory[_F, _X], func: _F, /) -> _X:
 
 
 @overload
-def decorator(*, data: DataFactory[_F, _X]) -> DecoratorFactory[[DecoratorSpecWithData[_F, _X]], _F]: ...
+def decorator(*, data: None = ...) -> DecoratorFactory[[DecoratorSpec[_F]], _G]: ...
 @overload
-def decorator(*, data: None = ...) -> DecoratorFactory[[DecoratorSpec[_F]], _F]: ...
-def decorator(*, data: DataFactory[_F, _X] | None = None) -> DecoratorFactory[[DecoratorSpecWithData[_F, _X]], _F] | DecoratorFactory[[DecoratorSpec[_F]], _F]:
+def decorator(*, data: DataFactory[_F, _X]) -> DecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G]: ...
+def decorator(*, data: DataFactory[_F, _X] | None = None) -> DecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G] | DecoratorFactory[[DecoratorSpec[_F]], _G]:
     """Create a decorator."""
-    def factory(decorator: DecoratorSpecWithData[_F, _X] | DecoratorSpec[_F], /) -> Decorator[_F]:
+    def factory(decorator: DecoratorSpecWithData[_F, _X] | DecoratorSpec[_F], /) -> Decorator[_G]:
         @wraps(decorator, silent=True, signature=False)
-        def inner(f: _F) -> _F:
+        def inner(f: _G) -> _G:  # type: ignore
             if data is not None:
-                _data = _mkdata(data, f)
+                _data = _mkdata(data, cast(_F, f))
             @wraps(f)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 if data is None:
-                    return cast(DecoratorSpec[_F], decorator)(f, *args, **kwargs)
-                return cast(DecoratorSpecWithData[_F, _X], decorator)(_data, f, *args, **kwargs)
+                    return cast(DecoratorSpec[_F], decorator)(cast(_F, f), *args, **kwargs)
+                return cast(DecoratorSpecWithData[_F, _X], decorator)(_data, cast(_F, f), *args, **kwargs)
             return wrapper
         return inner
     return factory

@@ -12,7 +12,7 @@ from packaging.specifiers import SpecifierSet
 from textwrap import dedent
 
 from .types import Mut
-from .decorators.wrap import Decorator, decorator
+from .func.dec import Decorator, decorator
 
 if TYPE_CHECKING:
     from .about import about as _about
@@ -124,7 +124,7 @@ def ensure(check: bool | Callable[[], bool | Any] | dependency | Any, /, err: st
 
 def requires(check: bool | Callable[[], bool | Any] | dependency, /, *, err: str | RequirementError = RequirementError()) -> Decorator[_F]:
     @decorator(data=lambda: Mut(True))
-    def requires(__data__: Mut[bool], __decorated__: _F, *args: Any, **kwargs: Any) -> Any:  # type: ignore
+    def requires(__data__: Mut[bool], __decorated__: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         if __data__.get():
             ensure(check, err=err)
             __data__.set(False)
