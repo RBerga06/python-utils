@@ -109,7 +109,7 @@ class ref(Generic[_T], SupportsPydanticV2["ref[_T] | weakref.ref[_T] | _T"]):
 
     @classmethod
     @override   # from SupportsPydanticV2
-    def validate(cls, obj: ref[_T] | weakref.ref[_T] | _T, /) -> ref[_T]:
+    def validate(cls, obj: ref[_T] | weakref.ref[_T] | _T, /) -> Self:
         if isinstance(obj, ref):
             return cast(ref[_T], obj)
         else:
