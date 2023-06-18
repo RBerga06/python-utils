@@ -5,8 +5,9 @@
 # Inspired by the `wrapt` library (but better)
 from contextlib import suppress
 from inspect import signature
-from typing import Any, Callable as Fn, Generic, cast, final, overload
+from typing import Any, Callable as Fn, ClassVar, Generic, cast, final, overload
 from typing_extensions import ParamSpec, Protocol, TypeVar, override
+
 from ..types import Mut
 from .wrap import wraps
 
@@ -61,6 +62,24 @@ class Decorator(DecoratorBase, Protocol):
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             return self.spec(f, *args, **kwargs)
         return wrapper
+
+
+class DecoratorWithAttr(Decorator, Protocol[_X]):
+    """Define a decorator that manages an attribute on a function."""
+    ATTR: ClassVar[str]
+    data: _X
+
+    def __init__(self, data: _X, /) -> None:
+        self.data = data
+
+    @override
+    def decorate(self, f: _F, /) -> _F:
+        f = super().decorate(f)
+        setattr(f, self.ATTR, self.data)
+        return f
+
+    def get(self, f: Fn[..., Any], /) -> _X:
+        return getattr(f, self.ATTR)
 
 
 ### FUNCTIONAL API ###
@@ -155,10 +174,14 @@ def pass_through(__decorated__: _F, *args: Any, **kwargs: Any) -> Any:
     return __decorated__(*args, **kwargs)
 
 
-def count_calls(counter: Mut[int]) -> AnyDecorator[_F]:
-    """A decorator that counts the calls of a function. No attribute is set on the decorated function."""
-    @decorator()
-    def count_calls(__decorated__: _F, *args: Any, **kwargs: Any) -> Any:
-        counter._ += 1
+class count_calls(DecoratorWithAttr[Mut[int]]):
+    ATTR: ClassVar[str] = "calls_count"
+
+    def __init__(self, counter: Mut[int] | None = None, /) -> None:
+        super().__init__(Mut(0) if counter is None else counter)
+
+    @override
+    def spec(__self__, __decorated__: AnyFn, *args: Any, **kwargs: Any) -> Any:
+        """Decorator behaviour specification."""
+        __self__.data._ += 1
         return __decorated__(*args, **kwargs)
-    return count_calls
