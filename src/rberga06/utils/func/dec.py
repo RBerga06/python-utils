@@ -176,6 +176,7 @@ def pass_through(__decorated__: _F, *args: Any, **kwargs: Any) -> Any:
 
 
 class count_calls(DecoratorWithAttr[Mut[int]]):
+    """A decorator that counts the calls of a function."""
     ATTR: ClassVar[str] = "calls_count"
 
     def __init__(self, counter: Mut[int] | None = None, /) -> None:
@@ -183,6 +184,5 @@ class count_calls(DecoratorWithAttr[Mut[int]]):
 
     @override
     def spec(__self__, __decorated__: AnyFn, *args: Any, **kwargs: Any) -> Any:
-        """Decorator behaviour specification."""
         __self__.data._ += 1
         return __decorated__(*args, **kwargs)
