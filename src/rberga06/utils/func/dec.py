@@ -6,7 +6,7 @@
 from contextlib import suppress
 from inspect import signature
 from typing import Any, Callable as Fn, cast, overload
-from typing_extensions import ParamSpec, Protocol, TypeVar
+from typing_extensions import ParamSpec, Protocol, TypeVar, override
 from ..types import Mut
 from .wrap import wraps
 
@@ -26,6 +26,39 @@ AnyDataFactory = Fn[[_F], _X] | Fn[[], _X]
 WRAPPER_ATTRS = {
     "__module__", "__name__", "__qualname__", "__doc__",
 }
+
+
+### CLASS API ###
+
+class DecoratorBase(Protocol[_F]):
+    """Define a decorator."""
+
+    def decorate(self, f: _F, /) -> _F:
+        """Decorate function `f`."""
+        ...
+
+    def __call__(self, f: _F, /) -> _F:
+        """Decorate function `f`."""
+        return self.decorate(f)
+
+
+class Decorator(DecoratorBase[_F], Protocol[_F]):
+    """Define a decorator."""
+
+    def spec(__self__, __decorated__: _F, *args: Any, **kwargs: Any) -> Any:
+        """Decorator behaviour specification."""
+        ...
+
+    @override
+    def decorate(self, f: _F, /) -> _F:
+        """Decorate function `f`."""
+        @wraps(f)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            return self.spec(f, *args, **kwargs)
+        return wrapper
+
+
+### FUNCTIONAL API ###
 
 
 class DecoratorSpec(Protocol[_F]):

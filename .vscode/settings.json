@@ -11,6 +11,7 @@
     "python.analysis.typeCheckingMode": "strict",
     "python.linting.mypyEnabled": true,
     "python.analysis.diagnosticSeverityOverrides": {
+        "reportSelfClsParameterName": "none",
         "reportImplicitOverride": "warning",
     },
 }
