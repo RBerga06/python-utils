@@ -18,9 +18,9 @@ _X = TypeVar("_X", infer_variance=True, default=dict[str, Any])
 _F = TypeVar("_F", infer_variance=True, bound=Fn[..., Any], default=Fn[..., Any])
 _G = TypeVar("_G", infer_variance=True, bound=Fn[..., Any], default=_F)  # In theory, `bound=_F`
 # Type aliases
-Decorator = Fn[[_T], _T]
-DecoratorFactory = Fn[_P, Decorator[_F]]
-DataFactory = Fn[[_F], _X] | Fn[[], _X]
+AnyDecorator = Fn[[_T], _T]
+AnyDecoratorFactory = Fn[_P, AnyDecorator[_F]]
+AnyDataFactory = Fn[[_F], _X] | Fn[[], _X]
 
 
 WRAPPER_ATTRS = {
@@ -62,19 +62,19 @@ class DecoratorSpecWithData(Protocol[_F, _X]):
     ) -> Any: ...
 
 
-def _mkdata(factory: DataFactory[_F, _X], func: _F, /) -> _X:
+def _mkdata(factory: AnyDataFactory[_F, _X], func: _F, /) -> _X:
     if signature(factory).parameters:
         return cast(Fn[[_F], _X], factory)(func)
     return cast(Fn[[], _X], factory)()
 
 
 @overload
-def decorator(*, data: None = ...) -> DecoratorFactory[[DecoratorSpec[_F]], _G]: ...
+def decorator(*, data: None = ...) -> AnyDecoratorFactory[[DecoratorSpec[_F]], _G]: ...
 @overload
-def decorator(*, data: DataFactory[_F, _X]) -> DecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G]: ...
-def decorator(*, data: DataFactory[_F, _X] | None = None) -> DecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G] | DecoratorFactory[[DecoratorSpec[_F]], _G]:
+def decorator(*, data: AnyDataFactory[_F, _X]) -> AnyDecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G]: ...
+def decorator(*, data: AnyDataFactory[_F, _X] | None = None) -> AnyDecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G] | AnyDecoratorFactory[[DecoratorSpec[_F]], _G]:
     """Create a decorator."""
-    def factory(decorator: DecoratorSpecWithData[_F, _X] | DecoratorSpec[_F], /) -> Decorator[_G]:
+    def factory(decorator: DecoratorSpecWithData[_F, _X] | DecoratorSpec[_F], /) -> AnyDecorator[_G]:
         @wraps(decorator, silent=True, signature=False)
         def inner(f: _G) -> _G:  # type: ignore
             if data is not None:
@@ -91,7 +91,7 @@ def decorator(*, data: DataFactory[_F, _X] | None = None) -> DecoratorFactory[[D
 
 ### Useful decorators ###
 
-def withattrs(**attrs: Any) -> Decorator[_T]:
+def withattrs(**attrs: Any) -> AnyDecorator[_T]:
     """Set the given attributes on the decorated object."""
     def withattrs(obj: _T) -> _T:
         for attr, value in attrs:
@@ -106,7 +106,7 @@ def pass_through(__decorated__: _F, *args: Any, **kwargs: Any) -> Any:
     return __decorated__(*args, **kwargs)
 
 
-def count_calls(counter: Mut[int]) -> Decorator[_F]:
+def count_calls(counter: Mut[int]) -> AnyDecorator[_F]:
     """A decorator that counts the calls of a function. No attribute is set on the decorated function."""
     @decorator()
     def count_calls(__decorated__: _F, *args: Any, **kwargs: Any) -> Any:
