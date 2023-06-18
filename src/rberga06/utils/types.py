@@ -40,7 +40,7 @@ class Version(_Version, SupportsPydanticV2["str | Version"]):
             return Version(obj)
 
 
-class Mut(Generic[_T]):
+class Mut(Generic[_T], SupportsPydanticV2["Mut[_T] | _T"]):
     """Flexible, static, mutable strong reference to a value."""
     __slots__ = ("value", )
     value: _T
@@ -64,6 +64,13 @@ class Mut(Generic[_T]):
     @override  # from builtins.object
     def __repr__(self) -> str:
         return f"Mut({self.value!r})"
+
+    @classmethod
+    @override
+    def validate(cls, obj: "Mut[_T] | _T") -> Self:
+        if isinstance(obj, cls):
+            return obj
+        return cls(obj)
 
 
 class ref(Generic[_T], SupportsPydanticV2["ref[_T] | weakref.ref[_T] | _T"]):
