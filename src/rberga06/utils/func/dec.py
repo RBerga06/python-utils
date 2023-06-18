@@ -75,11 +75,12 @@ class DecoratorWithAttr(Decorator, Protocol[_X]):
     @override
     def decorate(self, f: _F, /) -> _F:
         f = super().decorate(f)
-        setattr(f, self.ATTR, self.data)
+        setattr(f, type(self).ATTR, self.data)
         return f
 
-    def get(self, f: Fn[..., Any], /) -> _X:
-        return getattr(f, self.ATTR)
+    @classmethod
+    def get(cls, f: Fn[..., Any], /) -> _X:
+        return getattr(f, cls.ATTR)
 
 
 ### FUNCTIONAL API ###
