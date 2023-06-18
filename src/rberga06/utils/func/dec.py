@@ -5,22 +5,23 @@
 # Inspired by the `wrapt` library (but better)
 from contextlib import suppress
 from inspect import signature
-from typing import Any, Callable as Fn, cast, overload
+from typing import Any, Callable as Fn, Generic, cast, final, overload
 from typing_extensions import ParamSpec, Protocol, TypeVar, override
 from ..types import Mut
 from .wrap import wraps
 
+# Type aliases
+AnyFn = Fn[..., Any]
 # TypeVars
 _P = ParamSpec("_P")
 _R = TypeVar("_R", infer_variance=True)
 _T = TypeVar("_T", infer_variance=True)
 _X = TypeVar("_X", infer_variance=True, default=dict[str, Any])
-_F = TypeVar("_F", infer_variance=True, bound=Fn[..., Any], default=Fn[..., Any])
-_G = TypeVar("_G", infer_variance=True, bound=Fn[..., Any], default=_F)  # In theory, `bound=_F`
+_F = TypeVar("_F", infer_variance=True, bound=AnyFn, default=AnyFn)
 # Type aliases
 AnyDecorator = Fn[[_T], _T]
 AnyDecoratorFactory = Fn[_P, AnyDecorator[_F]]
-AnyDataFactory = Fn[[_F], _X] | Fn[[], _X]
+AnyDataFactory = Fn[[AnyFn], _X] | Fn[[], _X]
 
 
 WRAPPER_ATTRS = {
@@ -30,7 +31,7 @@ WRAPPER_ATTRS = {
 
 ### CLASS API ###
 
-class DecoratorBase(Protocol[_F]):
+class DecoratorBase(Protocol):
     """Define a decorator."""
 
     def decorate(self, f: _F, /) -> _F:
@@ -42,10 +43,14 @@ class DecoratorBase(Protocol[_F]):
         return self.decorate(f)
 
 
-class Decorator(DecoratorBase[_F], Protocol[_F]):
+class Decorator(DecoratorBase, Protocol):
     """Define a decorator."""
 
-    def spec(__self__, __decorated__: _F, *args: Any, **kwargs: Any) -> Any:
+    @overload
+    def spec(__self__, __decorated__: Fn[_P, _R], *args: _P.args, **kwargs: _P.kwargs) -> _R: ...
+    @overload
+    def spec(__self__, __decorated__: AnyFn, *args: Any, **kwargs: Any) -> Any: ...
+    def spec(__self__, __decorated__: AnyFn, *args: Any, **kwargs: Any) -> Any:
         """Decorator behaviour specification."""
         ...
 
@@ -61,64 +66,75 @@ class Decorator(DecoratorBase[_F], Protocol[_F]):
 ### FUNCTIONAL API ###
 
 
-class DecoratorSpec(Protocol[_F]):
+class DecoratorSpec(Protocol):
     """A ordinary decorator."""
     @overload
-    def __call__(
-        self: "DecoratorSpec[Fn[_P, _R]]",
-        __decorated__: Fn[_P, _R],
-        *args: _P.args, **kwargs: _P.kwargs,
-    ) -> _R: ...
+    def __call__(self, __decorated__: Fn[_P, _R], *args: _P.args, **kwargs: _P.kwargs) -> _R: ...
     @overload
-    def __call__(
-        self,
-        __decorated__: _F,
-        *args: Any, **kwargs: Any,
-    ) -> Any: ...
+    def __call__(self, __decorated__: Fn[..., Any], *args: Any, **kwargs: Any) -> Any: ...
 
 
-class DecoratorSpecWithData(Protocol[_F, _X]):
+class DecoratorSpecWithData(Protocol[_X]):
     """A decorator with data associated to each decorated function."""
     @overload
-    def __call__(
-        self: "DecoratorSpecWithData[Fn[_P, _R], _X]",
-        __data__: _X,
-        __decorated__: Fn[_P, _R],
-        *args: _P.args, **kwargs: _P.kwargs,
-    ) -> _R: ...
+    def __call__(self, __data__: _X, __decorated__: Fn[_P, _R], *args: _P.args, **kwargs: _P.kwargs) -> _R: ...  # type: ignore
     @overload
-    def __call__(
-        self,
-        __data__: _X,
-        __decorated__: _F,
-        *args: Any, **kwargs: Any,
-    ) -> Any: ...
+    def __call__(self, __data__: _X, __decorated__: Fn[..., Any], *args: Any, **kwargs: Any) -> Any: ...
 
 
-def _mkdata(factory: AnyDataFactory[_F, _X], func: _F, /) -> _X:
+def _mkdata(factory: AnyDataFactory[_X], func: Fn[..., Any], /) -> _X:
     if signature(factory).parameters:
-        return cast(Fn[[_F], _X], factory)(func)
+        return cast(Fn[[Fn[..., Any]], _X], factory)(func)
     return cast(Fn[[], _X], factory)()
 
 
+@final
+class _decorator(DecoratorBase):
+    """A `Decorator` subclass for the functional API."""
+    __slots__ = ("_spec",)
+    _spec: DecoratorSpec
+
+    def __init__(self, spec: DecoratorSpec, /) -> None:
+        self._spec = spec
+
+    @override
+    def decorate(self, f: _F, /) -> _F:
+        @wraps(f)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            return self._spec(f, *args, **kwargs)
+        return wrapper
+
+
+@final
+class _decorator_with_data(DecoratorBase, Generic[_X]):
+    """A `Decorator` subclass for the functional API."""
+    __slots__ = ("_spec", "_data")
+    _spec: DecoratorSpecWithData[_X]
+    _data: AnyDataFactory[_X]
+
+    def __init__(self, spec: DecoratorSpecWithData[_X], data: AnyDataFactory[_X], /) -> None:
+        self._spec = spec
+        self._data = data
+
+    @override
+    def decorate(self, f: _F, /) -> _F:
+        data = _mkdata(self._data, f)
+        @wraps(f)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            return self._spec(data, f, *args, **kwargs)
+        return wrapper
+
+
 @overload
-def decorator(*, data: None = ...) -> AnyDecoratorFactory[[DecoratorSpec[_F]], _G]: ...
+def decorator(*, data: None = ...) -> Fn[[DecoratorSpec], _decorator]: ...
 @overload
-def decorator(*, data: AnyDataFactory[_F, _X]) -> AnyDecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G]: ...
-def decorator(*, data: AnyDataFactory[_F, _X] | None = None) -> AnyDecoratorFactory[[DecoratorSpecWithData[_F, _X]], _G] | AnyDecoratorFactory[[DecoratorSpec[_F]], _G]:
+def decorator(*, data: AnyDataFactory[_X]) -> Fn[[DecoratorSpecWithData[_X]], _decorator_with_data[_X]]: ...
+def decorator(*, data: AnyDataFactory[_X] | None = None) -> Fn[[DecoratorSpec], _decorator] | Fn[[DecoratorSpecWithData[_X]], _decorator_with_data[_X]]:
     """Create a decorator."""
-    def factory(decorator: DecoratorSpecWithData[_F, _X] | DecoratorSpec[_F], /) -> AnyDecorator[_G]:
-        @wraps(decorator, silent=True, signature=False)
-        def inner(f: _G) -> _G:  # type: ignore
-            if data is not None:
-                _data = _mkdata(data, cast(_F, f))
-            @wraps(f)
-            def wrapper(*args: Any, **kwargs: Any) -> Any:
-                if data is None:
-                    return cast(DecoratorSpec[_F], decorator)(cast(_F, f), *args, **kwargs)
-                return cast(DecoratorSpecWithData[_F, _X], decorator)(_data, cast(_F, f), *args, **kwargs)
-            return wrapper
-        return inner
+    if data is None:
+        return _decorator
+    def factory(spec: DecoratorSpecWithData[_X], /) -> _decorator_with_data[_X]:
+        return _decorator_with_data(spec, data)
     return factory
 
 
