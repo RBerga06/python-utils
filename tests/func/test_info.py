@@ -38,3 +38,8 @@ class TestCallInfo:
         assert info[0].result == None
         assert info[1].result == None
         assert isinstance(info[2].result, RuntimeError)
+        assert repr(info) == (
+            f"[<CallInfo: {__name__}:foo(42, 'Magrathea!', p2=True) -> None>,"
+            f" <CallInfo: {__name__}:foo(42, p1='Magrathea!') -> None>,"
+            f" <CallInfo: {__name__}:foo(0, '') -> (!) RuntimeError (!)>]"
+        )

@@ -27,7 +27,7 @@ def _f_full_name(f: AnyFn) -> str:
 
 
 def _desc_f_call(f: AnyFn, args: Iterable[Any], kwargs: Iterable[tuple[str, Any]]) -> str:
-    params = [*map(repr, args), *[f"{k}={v}" for k, v in kwargs]]
+    params = [*map(repr, args), *[f"{k}={v!r}" for k, v in kwargs]]
     return f"{_f_full_name(f)}({', '.join(params)})"
 
 
