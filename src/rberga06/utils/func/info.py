@@ -21,7 +21,7 @@ def freeze_params(*args: Any, **kwargs: Any) -> tuple[FrozenArgs, FrozenKwargs]:
 
 def _f_full_name(f: AnyFn) -> str:
     module, qualname = f.__module__, f.__qualname__
-    if module == "__main__":
+    if module == "__main__":  # pragma: no cover
         return qualname
     return f"{module}:{qualname}"
 
@@ -73,7 +73,7 @@ class call_info(DecoratorWithAttr[list[CallInfo[AnyFn]]]):
             result = err
             success = False
             raise
-        except:
+        except:  # pragma: no cover
             # unreachable
             assert False
         else:
