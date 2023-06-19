@@ -48,12 +48,15 @@ class CallInfo(NamedTuple, Generic[_F]):
 
 
 class call_info(DecoratorWithAttr[list[CallInfo[AnyFn]]]):
+    """Collect detailed information about a function call."""
     ATTR: ClassVar[str] = "call_info"
+    apply: bool
     log: bool
     logger: logging.Logger | None
 
-    def __init__(self, /, *, log: bool = True, logger: logging.Logger | None = None) -> None:
+    def __init__(self, /, *, log: bool = True, logger: logging.Logger | None = None, apply: bool = __debug__) -> None:
         super().__init__([])
+        self.apply = apply
         self.log = log
         self.logger = logger
 
@@ -85,6 +88,8 @@ class call_info(DecoratorWithAttr[list[CallInfo[AnyFn]]]):
 
     @override
     def decorate(self, f: _F) -> _F:
+        if not self.apply:
+            return f
         self.logger = logging.getLogger(_f_full_name(f))
         return super().decorate(f)
 
