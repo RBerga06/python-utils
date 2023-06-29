@@ -5,7 +5,7 @@
 from __future__ import annotations
 from pathlib import Path
 import sys
-from typing import Protocol
+from typing_extensions import Protocol
 from pydantic import ValidationError
 import pytest
 from rberga06.utils.types import ref

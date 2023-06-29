@@ -11,7 +11,7 @@ from pkgutil import resolve_name
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing import Generic, Iterator, Self, TypeVar, cast, final, overload
+from typing_extensions import Generic, Iterator, Self, TypeVar, cast, final, overload
 from typing_extensions import override
 from pydantic import BaseModel, Field
 

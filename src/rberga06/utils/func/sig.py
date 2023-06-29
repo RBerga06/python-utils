@@ -3,10 +3,11 @@
 # mypy: ignore-errors
 """Useful decorators for modifying function signatures."""
 from __future__ import annotations
+from collections.abc import Callable as Fn
 from contextlib import suppress
 from inspect import Parameter, Signature, signature
-from typing import Concatenate as Concat, overload
-from typing import Any, Callable as Fn, Generic, ParamSpec, Self, TypeVar, cast, final
+from typing import Generic, cast
+from typing_extensions import Any, Concatenate as Concat, ParamSpec, Self, TypeVar, overload, final
 
 
 _F = TypeVar("_F", bound=Fn[..., Any])

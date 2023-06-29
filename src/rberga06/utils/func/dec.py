@@ -3,13 +3,15 @@
 # mypy: ignore-errors
 """Decorators."""
 # Inspired by the `wrapt` library (but better)
+from collections.abc import Callable as Fn
 from contextlib import suppress
 from inspect import signature
-from typing import Any, Callable as Fn, ClassVar, Generic, cast, final, overload
-from typing_extensions import ParamSpec, Protocol, TypeVar, override
+from typing import Generic, cast
+from typing_extensions import Any, ClassVar, ParamSpec, Protocol, TypeVar, final, overload, override
 
 from ..types import Mut
 from .wrap import wraps
+
 
 # Type aliases
 AnyFn = Fn[..., Any]
@@ -149,6 +151,7 @@ class _decorator_with_data(DecoratorBase, Generic[_X]):
 def decorator(*, data: None = ...) -> Fn[[DecoratorSpec], _decorator]: ...
 @overload
 def decorator(*, data: AnyDataFactory[_X]) -> Fn[[DecoratorSpecWithData[_X]], _decorator_with_data[_X]]: ...
+
 def decorator(*, data: AnyDataFactory[_X] | None = None) -> Fn[[DecoratorSpec], _decorator] | Fn[[DecoratorSpecWithData[_X]], _decorator_with_data[_X]]:
     """Create a decorator."""
     if data is None:
@@ -168,6 +171,7 @@ def withattrs(**attrs: Any) -> AnyDecorator[_T]:
                 object.__setattr__(obj, attr, value)
         return obj
     return withattrs
+
 
 @decorator()
 def pass_through(__decorated__: _F, *args: Any, **kwargs: Any) -> Any:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Plugin specification."""
 from __future__ import annotations
-from typing import Self, final
+from typing_extensions import Self, final
 from pydantic import BaseModel, DirectoryPath, FilePath
 import yaml
 from ..types import Version

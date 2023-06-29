@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Utilities for distribution data access."""
 from pathlib import Path
-from typing import ContextManager, NamedTuple, TypeVar
+from typing_extensions import ContextManager, NamedTuple, TypeVar
 import importlib.resources
 import importlib.metadata
 from packaging.requirements import Requirement

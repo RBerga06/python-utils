@@ -3,11 +3,12 @@
 # mypy: ignore-errors
 """Useful caching utilities."""
 from __future__ import annotations
+from collections.abc import Callable, Hashable
 import enum
 from functools import wraps
 import inspect
-from typing import Any, Callable, Generic, Hashable, Literal, Protocol, Self, TypeGuard, cast, overload
-from typing_extensions import TypeVar, override
+from typing import Generic, cast
+from typing_extensions import Any, Literal, Protocol, Self, TypeVar, TypeGuard, overload, override
 
 
 class _Sentinels(enum.Enum):

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 # mypy: ignore-errors
 """Function wrappers."""
+from collections.abc import Callable as Fn
 from contextlib import suppress
-from typing import Any, Callable as Fn, Literal, overload
-from typing_extensions import TypeVar
+from typing_extensions import Any, Literal, TypeVar, overload
 from .sig import sig
 
 # Type aliases

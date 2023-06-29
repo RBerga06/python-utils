@@ -3,8 +3,9 @@
 # mypy: ignore-errors
 """Useful types."""
 from __future__ import annotations
-from typing import Any, Callable, Generic, Literal, Protocol, Self, cast, overload
-from typing_extensions import override, TypeVar
+from collections.abc import Callable
+from typing import Generic, cast
+from typing_extensions import Any, Literal, Protocol, Self, TypeVar, overload, override
 import weakref
 from packaging.version import Version as _Version
 from pydantic_core import core_schema
