@@ -20,14 +20,10 @@ class access(Generic[_X]):
 
     _depth: int
     _ns: dict[str, Any] | None
-    _pub: list[str]
-    _priv: list[str]
 
     def __init__(self, ns: dict[str, Any] | None = None, /) -> None:
         self._depth = 0
         self._ns = ns
-        self._pub = []
-        self._priv = []
 
     @property
     def _inc_depth(self, /) -> Self:
@@ -54,32 +50,18 @@ class access(Generic[_X]):
         ns["__all__"] = all
         return all
 
-    @overload
-    def public(self, obj: _T, /) -> _T: ...
-    @overload
-    def public(self, *objs: *_TT) -> tuple[*_TT]: ...
-    def public(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
-        return self._inc_depth._operate(lambda all, x: (None if x in all else all.append(x)), *objs)
+    @property
+    def public(self) -> "public[_X]":
+        return self._specialized(public[_X])
 
-    @overload
-    def private(self, obj: _T, /) -> _T: ...
-    @overload
-    def private(self, *objs: *_TT) -> tuple[*_TT]: ...
-    def private(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
-        return self._inc_depth._operate(lambda all, x: (all.remove(x) if x in all else None), *objs)
+    @property
+    def private(self) -> "private[_X]":
+        return self._specialized(private[_X])
 
-    @overload
-    def _operate(self, cb: Callable[[list[str], str], None], obj: _T, /) -> _T: ...
-    @overload
-    def _operate(self, cb: Callable[[list[str], str], None], *objs: *_TT) -> tuple[*_TT]: ...
-    def _operate(self, cb: Callable[[list[str], str], None], *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
-        ns  = self._inc_depth.ns
-        all = self._inc_depth.all
-        for obj in objs:
-            name = getattr(obj, "__name__", obj if isinstance(obj, str) else None)
-            if name is not None and name in ns:
-                cb(all, name)
-        return objs[0] if len(objs) == 1 else objs
+    def _specialized(self, cls: "type[_AS]") -> "_AS":
+        obj = cls(self._ns)
+        obj._depth = self._depth
+        return obj
 
 
 class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
@@ -105,6 +87,19 @@ class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
         return super().__exit__(typ, val, tb)
 
     @overload
+    def _operate(self, cb: Callable[[list[str], str], None], obj: _T, /) -> _T: ...
+    @overload
+    def _operate(self, cb: Callable[[list[str], str], None], *objs: *_TT) -> tuple[*_TT]: ...
+    def _operate(self, cb: Callable[[list[str], str], None], *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
+        ns  = self._inc_depth.ns
+        all = self._inc_depth.all
+        for obj in objs:
+            name = getattr(obj, "__name__", obj if isinstance(obj, str) else None)
+            if name is not None and name in ns:
+                cb(all, name)
+        return objs[0] if len(objs) == 1 else objs
+
+    @overload
     def __call__(self, obj: _T, /) -> _T: ...
     @overload
     def __call__(self, *objs: *_TT) -> tuple[*_TT]: ...
@@ -119,7 +114,7 @@ class public(_access_specialized[_X]):
     @overload
     def __call__(self, *objs: *_TT) -> tuple[*_TT]: ...
     def __call__(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:  # type: ignore
-        return self._inc_depth.public(*objs)
+        return self._inc_depth._operate(lambda all, x: (None if x in all else all.append(x)), *objs)
 
 
 @final
@@ -129,7 +124,10 @@ class private(_access_specialized[_X]):
     @overload
     def __call__(self, *objs: *_TT) -> tuple[*_TT]: ...
     def __call__(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:  # type: ignore
-        return self._inc_depth.private(*objs)
+        return self._inc_depth._operate(lambda all, x: (all.remove(x) if x in all else None), *objs)
+
+
+_AS = TypeVar("_AS", bound=_access_specialized)
 
 
 public(globals())(
