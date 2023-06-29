@@ -3,8 +3,10 @@
 # mypy: ignore-errors
 """Test `rberga06.utils.cache`."""
 from __future__ import annotations
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, NoReturn, TypeVar, cast
+from typing import cast
+from typing_extensions import Any, NoReturn, TypeVar
 import pytest
 from rberga06.utils.cache import *
 from .testutils import Feat

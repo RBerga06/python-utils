@@ -4,8 +4,8 @@
 
 from enum import StrEnum, auto
 import os
-from typing import Any, Iterator
-from typing_extensions import override
+from collections.abc import Iterator
+from typing_extensions import Any, override
 
 import pytest
 

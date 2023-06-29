@@ -3,8 +3,8 @@
 # mypy: ignore-errors
 """Retrieve detailed information about function calls."""
 from collections.abc import Iterable
-from typing import Any, ClassVar, Generic, NamedTuple, TypeVar, cast
-from typing_extensions import override
+from typing import Generic, cast
+from typing_extensions import Any, ClassVar, NamedTuple, TypeVar, override
 from .dec import AnyFn, DecoratorWithAttr
 import logging
 

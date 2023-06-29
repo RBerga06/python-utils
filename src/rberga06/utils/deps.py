@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 # mypy: ignore-errors
 """Utilities for runtime dependencies management."""
+from collections.abc import Callable
 from enum import Enum
 import sys
 from types import EllipsisType
-from typing import TYPE_CHECKING, Any, Callable, Self, TypeVar
+from typing_extensions import TYPE_CHECKING, Any, Self, TypeVar, override
 import importlib.metadata
-from typing_extensions import override
 from packaging.specifiers import SpecifierSet
 from textwrap import dedent
 

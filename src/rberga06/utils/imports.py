@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Imports utilities."""
 from __future__ import annotations
-import importlib
-
-import sys
+from collections.abc import Iterable
+from importlib import import_module
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+import sys
 from types import ModuleType
-from typing import Iterable
 
 
 _FAKE_MODULE_DOC = "This is a fake module!"
@@ -16,7 +15,7 @@ _FAKE_MODULE_DOC = "This is a fake module!"
 def import_or_fake(name: str, is_pkg: bool = False, parents_know: bool = False) -> ModuleType:
     """Import the given module or package if possible, else fake it."""
     try:
-        return importlib.import_module(name)
+        return import_module(name)
     except ModuleNotFoundError:
         return fake_module(name, pkg=is_pkg, parents_know=parents_know)
 
