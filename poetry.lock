@@ -402,16 +402,16 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.6.3"
+version = "4.7.0rc1"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typing_extensions-4.6.3-py3-none-any.whl", hash = "sha256:88a4153d8505aabbb4e13aacb7c486c2b4a33ca3b3f807914a9b4c844c471c26"},
-    {file = "typing_extensions-4.6.3.tar.gz", hash = "sha256:d91d5919357fe7f681a9f2b5b4cb2a5f1ef0a1e9f59c4d8ff0d3491e05c0ffd5"},
+    {file = "typing_extensions-4.7.0rc1-py3-none-any.whl", hash = "sha256:16224afa8cc2b3679dd9e9a1efe719dd2e20a03f0cc2e4cc4c97870ae9622532"},
+    {file = "typing_extensions-4.7.0rc1.tar.gz", hash = "sha256:3c2c2cd887648efa0ea8f8ba4260a1213058e8e4a25a6a6f4e084740b2c858e2"},
 ]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "53d51571cda67243995bc94f5e15c98b3f9beeb6d8193ba5d6974d6703b14a5e"
+content-hash = "c8ddb61cf91111ed1aa1aa032656a427780f37d620cd0dd6d1ed8c3318f9a810"
