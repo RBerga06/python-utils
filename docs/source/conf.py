@@ -18,11 +18,15 @@ release = 'v1.0.0.dev3'
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
 
+intersphinx_mapping = dict(
+    python = ("https://docs.python.org/3", None),
+)
 
 
 # -- Options for HTML output -------------------------------------------------
