@@ -13,6 +13,8 @@ pydantic = {version = "^2.0b2", allow-prereleases = true}
 packaging = "^23.1"
 pyyaml = "^6.0"
 typing-extensions = {version = "^4.7.0rc1", allow-prereleases = true}
+sphinx = {version = "^7.0.1", extras = ["docs"]}
+furo = {version = "^2023.5.20", extras = ["docs"]}
 
 [tool.poetry.group.dev.dependencies]
 types-pyyaml = "^6.0.12.10"
