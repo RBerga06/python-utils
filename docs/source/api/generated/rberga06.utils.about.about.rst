@@ -1,4 +1,4 @@
-rberga06.utils.about.about
+﻿rberga06.utils.about.about
 ==========================
 
 .. currentmodule:: rberga06.utils.about
@@ -17,11 +17,9 @@ rberga06.utils.about.about
    .. autosummary::
    
       ~about.__init__
-      ~about.count
       ~about.dep
       ~about.deps
       ~about.deps_enum
-      ~about.index
       ~about.path
    
    
@@ -32,9 +30,9 @@ rberga06.utils.about.about
 
    .. autosummary::
    
-      ~about.dist
       ~about.name
       ~about.pkg
+      ~about.dist
       ~about.version
    
    
