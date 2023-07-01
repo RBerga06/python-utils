@@ -6,8 +6,7 @@ import pkgutil
 from types import ModuleType
 import doctest
 import importlib
-
-import rberga06.utils
+from typing import TYPE_CHECKING, Any
 
 
 def _iterpkg(mod: ModuleType) -> Iterator[ModuleType]:
@@ -20,6 +19,34 @@ def _iterpkg(mod: ModuleType) -> Iterator[ModuleType]:
             yield from _iterpkg(importlib.import_module(name))
 
 
+def _import_all(modulename: str) -> dict[str, Any]:
+    module = importlib.import_module(modulename)
+    return {
+        name: getattr(module, name)
+        for name in getattr(
+            module, "__all__",
+            [name for name in vars(module) if not name.startswith("_")],
+        )
+    }
+
+
+def namespace() -> dict[str, Any]:
+    assert not TYPE_CHECKING
+    import packaging.version
+    import pydantic
+    return {
+        **locals(),
+        **_import_all("typing_extensions"),
+    }
+
+
 def test_doctest() -> None:
+    import rberga06.utils
+
     for module in _iterpkg(rberga06.utils):
-        doctest.testmod(module, raise_on_error=True)
+        doctest.testmod(
+            module,
+            extraglobs=namespace(),
+            # verbose=True,  # uncomment this when needed
+            raise_on_error=True,
+        )

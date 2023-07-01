@@ -24,11 +24,13 @@ class SupportsPydanticV2(Protocol[_T]):
     ...     def __init__(self, value: str, /) -> None:
     ...         self.value = value
     ...
-    ...     def __repr__(self) -> str:
-    ...         return f"<Foo: {self.value}>"
-    ...
     ...     @override
-    ...     def validate(cls, value: Any) -> Self:
+    ...     def __repr__(self) -> str:
+    ...         return f"<Foo: {self.value!r}>"
+    ...
+    ...     @classmethod
+    ...     @override
+    ...     def validate(cls, /, value: Any) -> Self:
     ...         if isinstance(value, str):
     ...             return cls(value)
     ...         return cls(repr(value))
@@ -37,17 +39,17 @@ class SupportsPydanticV2(Protocol[_T]):
     ...     answer: Foo  # you can use Foo as a pydantic field type
     ...
     >>> Foo("42")
-    <Foo: 42>
+    <Foo: '42'>
     >>> # useful when outside a pydantic model
     >>> Foo.validate(42)
-    <Foo: 42>
+    <Foo: '42'>
     >>> # Foo.validate() is called when validating the pydantic model
     >>> Model(answer=42)
-    answer=<Foo: 42>
+    Model(answer=<Foo: '42'>)
     >>> Model(answer="42")
-    answer=<Foo: 42>
+    Model(answer=<Foo: '42'>)
     >>> Model.model_validate({"answer": 42})
-    answer=<Foo: 42>
+    Model(answer=<Foo: '42'>)
     """
 
     @classmethod
@@ -73,18 +75,18 @@ class Version(packaging.version.Version, SupportsPydanticV2["Version | packaging
 
     :Example:
 
-    >>> class Model(BaseModel):
+    >>> class Model(pydantic.BaseModel):
     ...     # with packaging.version.Version, this would fail
     ...     v: Version
     ...
     >>> Model(v=Version("v1.0.0"))
-    v = <Version 1.0.0>
+    Model(v=<Version('1.0.0')>)
     >>> Model(v=packaging.version.Version("v1.0.0"))
-    v = <Version 1.0.0>
+    Model(v=<Version('1.0.0')>)
     >>> Model(v="v1.0.0")
-    v = <Version 1.0.0>
+    Model(v=<Version('1.0.0')>)
     >>> Model.model_validate(dict(v="v1.0.0"))
-    v = <Version 1.0.0>
+    Model(v=<Version('1.0.0')>)
     >>> # In addition, Version behaves exactly like packaging.version.Version:
     >>> Version("1.0.0") > Version("1.0.0.a2")
     True
@@ -145,7 +147,7 @@ class Mut(Generic[_T], SupportsPydanticV2["Mut[_T] | _T"]):
     Mut([33]) Mut([33]) Mut([33]) Mut([42])
     >>> m0._ = [69]
     >>> print(m0, m1, m2, m3)
-    Mut([69]) Mut([69]) Mut([42]) Mut([42])
+    Mut([69]) Mut([69]) Mut([33]) Mut([42])
 
     :py:class:`Mut` is most useful when you need to pass around an immutable piece of data
     (like, in the example, :py:class:`int` instances), without bothering to use a full :py:class:`list`,
