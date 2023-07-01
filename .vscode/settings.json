@@ -14,4 +14,5 @@
         "reportSelfClsParameterName": "none",
         "reportImplicitOverride": "warning",
     },
+    "esbonio.sphinx.confDir": "${workspaceFolder}/docs/source",
 }

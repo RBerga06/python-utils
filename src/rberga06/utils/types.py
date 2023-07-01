@@ -7,7 +7,7 @@ from collections.abc import Callable
 from typing import Generic, cast
 from typing_extensions import Any, Literal, Protocol, Self, TypeVar, overload, override
 import weakref
-from packaging.version import Version as _Version
+import packaging.version
 from pydantic_core import core_schema
 
 
@@ -15,13 +15,18 @@ _T = TypeVar("_T", infer_variance=True)
 
 
 class SupportsPydanticV2(Protocol[_T]):
-    """A protocol that makes it easy to implement pydantic v2 support."""
+    """A protocol that makes it easy to implement :py:mod:`pydantic` v2 support."""
 
     @classmethod
-    def validate(cls, obj: _T, /) -> Self: ...
+    def validate(cls, obj: _T, /) -> Self:
+        """
+        Instantiate this class from :py:obj:`obj`.
+        """
+        ...
 
     @classmethod
     def __get_pydantic_core_schema__(cls, *args: Any, **kwargs: Any) -> core_schema.PlainValidatorFunctionSchema:
+        """Provides a :py:mod:`pydantic_core` schema. Implements :py:mod:`pydantic` v2 support."""
         # See https://github.com/pydantic/pydantic/issues/5373
         return core_schema.no_info_plain_validator_function(
             lambda _: cls.validate(_), serialization=core_schema.to_string_ser_schema()
@@ -29,12 +34,14 @@ class SupportsPydanticV2(Protocol[_T]):
 
 
 
-class Version(_Version, SupportsPydanticV2["str | Version"]):
-    # pydantic(v2)-compatible packaging.version.Version
+class Version(packaging.version.Version, SupportsPydanticV2["Version | str"]):
+    """
+    A :py:mod:`pydantic` v2-compatible :class:`packaging.version.Version` subclass.
+    """
 
     @classmethod
-    @override   # from SupportsPydanticV2
-    def validate(cls, obj: str | Version, /) -> Self:
+    @override
+    def validate(cls, obj: Version | str, /) -> Self:
         if isinstance(obj, Version):
             return obj
         else:
@@ -44,25 +51,30 @@ class Version(_Version, SupportsPydanticV2["str | Version"]):
 class Mut(Generic[_T], SupportsPydanticV2["Mut[_T] | _T"]):
     """Flexible, static, mutable strong reference to a value."""
     __slots__ = ("value", )
+
     value: _T
+    """The inner value."""
 
     def __init__(self, value: _T, /) -> None:
         self.value = value
 
     def get(self) -> _T:
+        """Get the inner value."""
         return self.value
 
     def set(self, value: _T, /) -> None:
+        """Set the inner value."""
         self.value = value
 
     @property
     def _(self) -> _T:
+        """The inner value."""
         return self.value
     @_.setter
     def _(self, _: _T) -> None:
         self.set(_)
 
-    @override  # from builtins.object
+    @override
     def __repr__(self) -> str:
         return f"Mut({self.value!r})"
 
@@ -81,7 +93,7 @@ class ref(Generic[_T], SupportsPydanticV2["ref[_T] | weakref.ref[_T] | _T"]):
     inner: weakref.ref[_T] | _T
     """The wrapped value or a weak reference to it."""
 
-    def __init__(self, inner: _T | weakref.ref[_T], /):
+    def __init__(self, inner: _T | weakref.ref[_T], /) -> None:
         self.inner = inner
 
     @property
@@ -105,11 +117,11 @@ class ref(Generic[_T], SupportsPydanticV2["ref[_T] | weakref.ref[_T] | _T"]):
 
     @property
     def is_weak(self) -> bool:
-        """Check if `self` is a weak reference."""
+        """Check if :py:obj:`self` is a weak reference."""
         return isinstance(self.inner, weakref.ref)
 
     @classmethod
-    @override   # from SupportsPydanticV2
+    @override
     def validate(cls, obj: ref[_T] | weakref.ref[_T] | _T, /) -> Self:
         if isinstance(obj, ref):
             return cast(ref[_T], obj)
@@ -146,5 +158,8 @@ class AttrFunc(Generic[_T]):
 
 
 __all__ = [
-    "Version", "Mut", "ref", "ItemFunc", "AttrFunc",
+    "SupportsPydanticV2",
+    "Version",
+    "Mut", "ref",
+    "ItemFunc", "AttrFunc",
 ]

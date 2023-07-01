@@ -26,6 +26,10 @@ exclude_patterns = []
 
 intersphinx_mapping = dict(
     python = ("https://docs.python.org/3", None),
+    packaging = ("https://packaging.pypa.io/en/stable/", None),
+    typing_extensions = ("https://typing-extensions.readthedocs.io/en/latest", None),
+    pydantic = ("https://docs.pydantic.dev/latest/", None),
+    pydantic_core = ("https://docs.pydantic.dev/latest/", None),
 )
 
 

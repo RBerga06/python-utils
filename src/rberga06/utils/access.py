@@ -15,8 +15,7 @@ _T = TypeVar("_T")
 _TT = TypeVarTuple("_TT")
 
 
-class access(Generic[_X]):
-    """Access specifiers."""
+class _access(Generic[_X]):
 
     _depth: int
     _ns: dict[str, Any] | None
@@ -34,6 +33,7 @@ class access(Generic[_X]):
 
     @property
     def ns(self, /) -> dict[str, _X]:
+        """The attached namespace."""
         ns = self._ns
         if ns is not None:
             return ns
@@ -44,18 +44,26 @@ class access(Generic[_X]):
 
     @property
     def all(self, /) -> list[str]:
+        """The attached :py:obj:`__all__`."""
         ns: dict[str, Any]  = self._inc_depth.ns
         _all: Iterable[str] = ns.get("__all__", [])
         all = _all if isinstance(_all, list) else list(_all)
         ns["__all__"] = all
         return all
 
+
+@final
+class access(_access[_X]):
+    """Access specifiers."""
+
     @property
     def public(self) -> "public[_X]":
+        """Mark something public"""
         return self._specialized(public[_X])
 
     @property
     def private(self) -> "private[_X]":
+        """Mark something private"""
         return self._specialized(private[_X])
 
     def _specialized(self, cls: "type[_AS]") -> "_AS":
@@ -64,7 +72,7 @@ class access(Generic[_X]):
         return obj
 
 
-class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
+class _access_specialized(_access[_X], AbstractContextManager[dict[str, _X]]):
     @classmethod
     def _ns_special_key(cls, /) -> str:
         return f"<brs.utils.access:{cls.__name__}:namespace-backup-keys>"
@@ -109,6 +117,7 @@ class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
 
 @final
 class public(_access_specialized[_X]):
+    """Mark something public."""
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
     @overload
@@ -119,6 +128,7 @@ class public(_access_specialized[_X]):
 
 @final
 class private(_access_specialized[_X]):
+    """Mark something private."""
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
     @overload
@@ -130,6 +140,4 @@ class private(_access_specialized[_X]):
 _AS = TypeVar("_AS", bound=_access_specialized)
 
 
-public(globals())(
-    access, public, private
-)
+__all__ = ["access", "public", "private"]
