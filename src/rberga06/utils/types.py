@@ -15,7 +15,40 @@ _T = TypeVar("_T", infer_variance=True)
 
 
 class SupportsPydanticV2(Protocol[_T]):
-    """A protocol that makes it easy to implement :py:mod:`pydantic` v2 support."""
+    """
+    A :py:class:`typing.Protocol` that makes it easy to implement :py:mod:`pydantic` v2 support.
+
+    :Example:
+
+    >>> class Foo(SupportsPydanticV2[Any]):
+    ...     def __init__(self, value: str, /) -> None:
+    ...         self.value = value
+    ...
+    ...     def __repr__(self) -> str:
+    ...         return f"<Foo: {self.value}>"
+    ...
+    ...     @override
+    ...     def validate(cls, value: Any) -> Self:
+    ...         if isinstance(value, str):
+    ...             return cls(value)
+    ...         return cls(repr(value))
+    ...
+    >>> class Model(pydantic.BaseModel):
+    ...     answer: Foo  # you can use Foo as a pydantic field type
+    ...
+    >>> Foo("42")
+    <Foo: 42>
+    >>> # useful when outside a pydantic model
+    >>> Foo.validate(42)
+    <Foo: 42>
+    >>> # Foo.validate() is called when validating the pydantic model
+    >>> Model(answer=42)
+    answer=<Foo: 42>
+    >>> Model(answer="42")
+    answer=<Foo: 42>
+    >>> Model.model_validate({"answer": 42})
+    answer=<Foo: 42>
+    """
 
     @classmethod
     def validate(cls, obj: _T, /) -> Self:
@@ -34,18 +67,41 @@ class SupportsPydanticV2(Protocol[_T]):
 
 
 
-class Version(packaging.version.Version, SupportsPydanticV2["Version | str"]):
+class Version(packaging.version.Version, SupportsPydanticV2["Version | packaging.version.Version | str"]):
     """
     A :py:mod:`pydantic` v2-compatible :class:`packaging.version.Version` subclass.
+
+    :Example:
+
+    >>> class Model(BaseModel):
+    ...     # with packaging.version.Version, this would fail
+    ...     v: Version
+    ...
+    >>> Model(v=Version("v1.0.0"))
+    v = <Version 1.0.0>
+    >>> Model(v=packaging.version.Version("v1.0.0"))
+    v = <Version 1.0.0>
+    >>> Model(v="v1.0.0")
+    v = <Version 1.0.0>
+    >>> Model.model_validate(dict(v="v1.0.0"))
+    v = <Version 1.0.0>
+    >>> # In addition, Version behaves exactly like packaging.version.Version:
+    >>> Version("1.0.0") > Version("1.0.0.a2")
+    True
+
+    See :py:class:`packaging.version.Version` for more details.
     """
 
     @classmethod
     @override
-    def validate(cls, obj: Version | str, /) -> Self:
-        if isinstance(obj, Version):
+    def validate(cls, obj: Version | packaging.version.Version | str, /) -> Self:
+        if isinstance(obj, cls):
             return obj
+        elif isinstance(obj, packaging.version.Version):
+            return cls(str(obj))
         else:
             return Version(obj)
+
 
 
 class Mut(Generic[_T], SupportsPydanticV2["Mut[_T] | _T"]):
@@ -84,6 +140,7 @@ class Mut(Generic[_T], SupportsPydanticV2["Mut[_T] | _T"]):
         if isinstance(obj, cls):
             return obj
         return cls(obj)
+
 
 
 class ref(Generic[_T], SupportsPydanticV2["ref[_T] | weakref.ref[_T] | _T"]):
