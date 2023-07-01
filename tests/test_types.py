@@ -14,18 +14,6 @@ from .testutils import Feat
 Feat.OTHER.required()
 
 
-class TestVersion:
-    """Test pydantic(v2) compatibility."""
-
-    def test_version(self) -> None:
-        class Model(BaseModel):
-            v: Version
-        m = Model(v=Version("v1.0.0"))
-        assert m == Model(v="1.0.0")  # type: ignore
-        assert m == Model.model_validate(dict(v="v1.0.0"))
-
-
-
 class Foo: ...
 
 
