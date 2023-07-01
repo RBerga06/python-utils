@@ -4,7 +4,7 @@
 """Useful types."""
 from __future__ import annotations
 from collections.abc import Callable
-from typing import Generic, cast
+from typing import Generic, cast, final
 from typing_extensions import Any, Literal, Protocol, Self, TypeVar, overload, override
 import weakref
 import packaging.version
@@ -104,12 +104,83 @@ class Version(packaging.version.Version, SupportsPydanticV2["Version | packaging
 
 
 
+@final
 class Mut(Generic[_T], SupportsPydanticV2["Mut[_T] | _T"]):
-    """Flexible, static, mutable strong reference to a value."""
+    """
+    Flexible, static, mutable strong reference to a value.
+
+    :Example:
+
+    >>> # Immutable data
+    >>> data = 42
+    >>> m0 = Mut(data)
+    >>> m1 = m0
+    >>> m2 = Mut(data)
+    >>> m0 is m1
+    True
+    >>> m0 is m2
+    False
+    >>> print(m0, m1, m2)
+    Mut(42) Mut(42) Mut(42)
+    >>> m0._ = 69
+    >>> print(m0, m1, m2)
+    Mut(69) Mut(69) Mut(42)
+    >>>
+    >>> # Mutable data
+    >>> data = [42]
+    >>> m0 = Mut(data)
+    >>> m1 = m0
+    >>> m2 = Mut(data)
+    >>> m3 = Mut(data.copy())
+    >>> m0 is m1
+    True
+    >>> m0 is m2
+    False
+    >>> m0 is m3
+    False
+    >>> print(m0, m1, m2, m3)
+    Mut([42]) Mut([42]) Mut([42]) Mut([42])
+    >>> m0._[0] = 33
+    >>> print(m0, m1, m2, m3)
+    Mut([33]) Mut([33]) Mut([33]) Mut([42])
+    >>> m0._ = [69]
+    >>> print(m0, m1, m2, m3)
+    Mut([69]) Mut([69]) Mut([42]) Mut([42])
+
+    :py:class:`Mut` is most useful when you need to pass around an immutable piece of data
+    (like, in the example, :py:class:`int` instances), without bothering to use a full :py:class:`list`,
+    where data access might be less readable and more error-prone -
+    compare :py:obj:`(l := [42])[0]` with :py:obj:`(m := Mut(42)).value`...
+
+    :py:class:`Mut` can also be used as a Pydantic model field, because it implements :py:class:`SupportsPydanticV2`.
+
+    .. caution::
+        Nesting :py:class:`Mut` instances (for example, :py:obj:`Mut(Mut(42))`) is possible, but **strongly discouraged.**
+        There are two reasons for this:
+
+        1.  There is no use case for this. If an object is already a `Mut`, why wrapping it _again_ into a `Mut`?
+            To get the exact same behaviour the object already has?
+
+        2.  The Pydantic compatibility API (see :py:class:`SupportsPydanticV2`) is designed to allow the following:
+
+            >>> Mut[int].validate(42)
+            Mut(42)
+            >>> Mut[int].validate(Mut(42))
+            Mut(42)
+
+            It's not yet possible to access bound type parameters at runtime with consistency
+            (see https://github.com/python/typing/issues/629); this means it's impossible to
+            distinguish between these two calls:
+
+            >>> Mut[int].validate(Mut(42))
+            Mut(42)
+            >>> Mut[Mut[int]].validate(Mut(42))
+            Mut(42)
+    """
     __slots__ = ("value", )
 
     value: _T
-    """The inner value."""
+    """The inner value. Also accessible via the :py:attr:`~_` property."""
 
     def __init__(self, value: _T, /) -> None:
         self.value = value
