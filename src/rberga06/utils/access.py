@@ -16,7 +16,6 @@ _TT = TypeVarTuple("_TT")
 
 
 class _access(Generic[_X]):
-
     _depth: int
     _ns: dict[str, Any] | None
 
@@ -54,7 +53,39 @@ class _access(Generic[_X]):
 
 @final
 class access(_access[_X]):
-    """Access specifiers."""
+    """
+    Access specifiers.
+
+    :param ns: The namespace in which to operate. Defaults to the caller's `locals()`.
+
+    :Example:
+
+    >>> locals().clear()
+    >>> from rberga06.utils.access import *
+    >>> __all__
+    Traceback (most recent call last):
+    ...
+    NameError: name '__all__' is not defined
+    >>> a = access()
+    >>> @a.public
+    ... def _foo(x: int) -> int:
+    ...     return x
+    ...
+    >>> @a.private
+    ... def priv(y: str) -> str:
+    ...     return y
+    ...
+    >>> with a.public:
+    ...     _x: str = "public"
+    ...
+    >>> with a.private:
+    ...     y: int = 42
+    ...
+    >>> __all__
+    ['_foo', '_x']
+    >>> __all__ is a.all
+    True
+    """
 
     @property
     def public(self) -> "public[_X]":
@@ -85,11 +116,12 @@ class _access_specialized(_access[_X], AbstractContextManager[dict[str, _X]]):
 
     @override
     def __exit__(self, typ: type[BaseException] | None, val: BaseException | None, tb: TracebackType | None, /) -> bool | None:
+        special_key = type(self)._ns_special_key()
         # Call `self.__call__(...)` on the added or removed keys
         ns: dict[str, Any] = self._inc_depth.ns
         new = set(ns.keys())
-        old = set(ns.pop(type(self)._ns_special_key(), ns))
-        for key in new - old:
+        old = set(ns.pop(special_key, ns))
+        for key in (new - old) - {special_key}:
             self._inc_depth(key)
         # Do not handle any exception
         return super().__exit__(typ, val, tb)
@@ -99,11 +131,10 @@ class _access_specialized(_access[_X], AbstractContextManager[dict[str, _X]]):
     @overload
     def _operate(self, cb: Callable[[list[str], str], None], *objs: *_TT) -> tuple[*_TT]: ...
     def _operate(self, cb: Callable[[list[str], str], None], *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
-        ns  = self._inc_depth.ns
         all = self._inc_depth.all
         for obj in objs:
             name = getattr(obj, "__name__", obj if isinstance(obj, str) else None)
-            if name is not None and name in ns:
+            if name is not None:
                 cb(all, name)
         return objs[0] if len(objs) == 1 else objs
 
@@ -115,9 +146,33 @@ class _access_specialized(_access[_X], AbstractContextManager[dict[str, _X]]):
         raise NotImplementedError(f"{type(self).__module__}:{type(self).__qualname__}.__call__(...)")
 
 
+_AS = TypeVar("_AS", bound=_access_specialized)
+
+
 @final
 class public(_access_specialized[_X]):
-    """Mark something public."""
+    """
+    Mark something public.
+
+    :param ns: The namespace in which to operate. Defaults to the caller's `locals()`.
+
+    :Example:
+
+    >>> locals().clear()
+    >>> from rberga06.utils.access import *
+    >>> @public()
+    ... def _foo(x: int) -> int:
+    ...     return x
+    ...
+    >>> with public():
+    ...     x: str = "public"
+    ...     _y: str = "also public"
+    ...
+    >>> set(__all__)
+    {'_foo', 'x', '_y'}
+    >>> __all__ is public().all
+    True
+    """
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
     @overload
@@ -128,16 +183,34 @@ class public(_access_specialized[_X]):
 
 @final
 class private(_access_specialized[_X]):
-    """Mark something private."""
+    """
+    Mark something private.
+
+    :param ns: The namespace in which to operate. Defaults to the caller's `locals()`.
+
+    :Example:
+
+    >>> locals().clear()
+    >>> from rberga06.utils.access import *
+    >>> @private()
+    ... def foo(x: int) -> int:
+    ...     return x
+    ...
+    >>> with private():
+    ...     _x: str = "private"
+    ...     y: str = "also private"
+    ...
+    >>> __all__
+    []
+    >>> __all__ is private().all
+    True
+    """
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
     @overload
     def __call__(self, *objs: *_TT) -> tuple[*_TT]: ...
     def __call__(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:  # type: ignore
         return self._inc_depth._operate(lambda all, x: (all.remove(x) if x in all else None), *objs)
-
-
-_AS = TypeVar("_AS", bound=_access_specialized)
 
 
 __all__ = ["access", "public", "private"]

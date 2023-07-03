@@ -2,11 +2,31 @@
 # -*- coding: utf-8 -*-
 """Test docstrings."""
 from collections.abc import Iterator
-import pkgutil
-from types import ModuleType
 import doctest
 import importlib
-from typing import TYPE_CHECKING, Any
+import pytest
+import pkgutil
+import textwrap as tw
+import traceback
+from types import ModuleType
+from typing_extensions import TYPE_CHECKING, Any, override
+import rberga06.utils
+
+
+
+class EnhancedDocTestFailure(doctest.DocTestFailure):
+    @override
+    def __str__(self) -> str:
+        l = "  "
+        message = "\n".join([
+            "Doc test:",
+            tw.indent(self.example.source, l),
+            "Got:",
+            tw.indent(self.got, l),
+            "Expected:",
+            tw.indent(self.example.want or "None", l),
+        ])
+        return f"Doctest failure.\n{tw.indent(message, '  ')}"
 
 
 def _iterpkg(mod: ModuleType) -> Iterator[ModuleType]:
@@ -40,13 +60,24 @@ def namespace() -> dict[str, Any]:
     }
 
 
-def test_doctest() -> None:
-    import rberga06.utils
+_ns = namespace()
 
-    for module in _iterpkg(rberga06.utils):
+
+@pytest.mark.parametrize("module", [*_iterpkg(rberga06.utils)])
+def test_doctest(module: ModuleType) -> None:
+    try:
         doctest.testmod(
             module,
-            extraglobs=namespace(),
+            extraglobs=_ns.copy(),
             # verbose=True,  # uncomment this when needed
             raise_on_error=True,
+        )
+    except doctest.DocTestFailure as exc:
+        raise EnhancedDocTestFailure(exc.test, exc.example, exc.got)
+    except doctest.UnexpectedException as exc:
+        cls, err, _ = exc.exc_info
+        err_str = "\n".join(traceback.format_exception_only(cls, value=err))
+        raise EnhancedDocTestFailure(
+            exc.test, exc.example,
+            f"Traceback (most recent call last):\n...\n{err_str}"
         )

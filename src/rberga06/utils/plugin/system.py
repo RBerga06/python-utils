@@ -4,6 +4,7 @@
 """Plugin systems."""
 from __future__ import annotations
 import ast
+from collections.abc import Iterator
 from collections import deque
 from contextlib import suppress
 from importlib import import_module
@@ -11,8 +12,8 @@ from pkgutil import resolve_name
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing_extensions import Generic, Iterator, Self, TypeVar, cast, final, overload
-from typing_extensions import override
+from typing import Generic, cast
+from typing_extensions import Self, TypeVar, final, overload, override
 from pydantic import BaseModel, Field
 
 from ..types import Version
@@ -194,7 +195,4 @@ class System(BaseModel, Generic[_F]):
 # Plugin.model_rebuild(force=True)
 
 
-__all__ = [
-    "Plugin",
-    "System",
-]
+__all__ = ["Plugin", "System"]
