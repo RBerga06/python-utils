@@ -50,7 +50,7 @@ class Features(BaseModel):
     >>> sys = plugin.System(
     ...     name="my.plugin", version="1.0.0",
     ...     package="mypackage.plugins",
-    ...     Feats=MyFeats,
+    ...     Features=MyFeats,
     ... ).extend_path_pkg("mypackage.plugins").discover_all()
     >>> myplugin = sys.plugins[0]
     >>> myfeats = myplugin.feat
@@ -59,7 +59,6 @@ class Features(BaseModel):
     >>> myfeats.foo
     42
     """
-    # To be subclassed by plugin systems.
 
 
 __all__ = ["Info", "Spec", "Features"]
