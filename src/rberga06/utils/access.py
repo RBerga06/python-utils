@@ -25,7 +25,7 @@ class _access(Generic[_X]):
 
     @property
     def _inc_depth(self, /) -> Self:
-        """Return a copy of `self` with `self._depth` incremented by 1."""
+        """Return a copy of :py:obj:`self` with :py:attr:`~._depth` incremented by 1."""
         other = type(self)(self._ns)
         other._depth = self._depth + 1
         return other
@@ -56,7 +56,7 @@ class access(_access[_X]):
     """
     Access specifiers.
 
-    :param ns: The namespace in which to operate. Defaults to the caller's `locals()`.
+    :param ns: The namespace in which to operate. Defaults to the caller's :py:func:`locals()`.
 
     :Example:
 
@@ -81,10 +81,31 @@ class access(_access[_X]):
     >>> with a.private:
     ...     y: int = 42
     ...
-    >>> __all__
+    >>> __all__  # it's now magically defined
     ['_foo', '_x']
     >>> __all__ is a.all
     True
+
+    .. important::
+
+        When using the context manager syntax (for example, :py:obj:`with a.public:` blocks),
+        the :py:class:`access` instance only knows about new assignments.
+        This means you really should **not** re-assign variables
+        *in a* :py:obj:`with a.public:` *or* :py:obj:`with a.private:` *block*.
+        For example:
+
+        >>> # This is ok
+        >>> with a.public:
+        ...     x: int = 0
+        ...
+        >>> x = 42
+        >>>
+        >>> # This is not
+        >>> x: int = 0
+        >>> with a.public:
+        ...     x: int = 42
+        >>>
+
     """
 
     @property
@@ -172,6 +193,27 @@ class public(_access_specialized[_X]):
     ['_foo', '_y', 'x']
     >>> __all__ is public().all
     True
+
+    .. important::
+
+        When using the context manager syntax (aka :py:obj:`with public():` blocks),
+        the :py:class:`public` instance only knows about new assignments.
+        This means you really should **not** re-assign variables
+        *in a* :py:obj:`with public():` *block*.
+        For example:
+
+        >>> # This is ok
+        >>> with public():
+        ...     x: int = 0
+        ...
+        >>> x = 42
+        >>>
+        >>> # This is not
+        >>> x: int = 0
+        >>> with public():
+        ...     x: int = 42
+        >>>
+
     """
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
@@ -204,6 +246,27 @@ class private(_access_specialized[_X]):
     []
     >>> __all__ is private().all
     True
+
+    .. important::
+
+        When using the context manager syntax (aka :py:obj:`with private():` blocks),
+        the :py:class:`private` instance only knows about new assignments.
+        This means you really should **not** re-assign variables
+        *in a* :py:obj:`with private():` *block*.
+        For example:
+
+        >>> # This is ok
+        >>> with private():
+        ...     x: int = 0
+        ...
+        >>> x = 42
+        >>>
+        >>> # This is not
+        >>> x: int = 0
+        >>> with private():
+        ...     x: int = 42
+        >>>
+
     """
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
