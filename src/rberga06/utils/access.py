@@ -168,8 +168,8 @@ class public(_access_specialized[_X]):
     ...     x: str = "public"
     ...     _y: str = "also public"
     ...
-    >>> set(__all__)
-    {'_foo', 'x', '_y'}
+    >>> sorted(__all__)
+    ['_foo', '_y', 'x']
     >>> __all__ is public().all
     True
     """
