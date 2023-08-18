@@ -21,7 +21,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Environment**
  - OS: [e.g. macOS/Windows/Ubuntu]
- - Output of `pip list` (or `poetry run pip list` if using `poetry`): `<irrelevant>`
+ - Output of `pip list` (or `pdm run pip list` if using `pdm`): `<irrelevant>`
 
 **Additional context**
 Add any other context about the problem here.

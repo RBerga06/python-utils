@@ -1,27 +1,50 @@
-[tool.poetry]
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[project]
 name = "rberga06-utils"
 version = "0.0.1.dev3"
 description = "Useful utilities for Python projects."
-authors = ["RBerga06 <78449715+RBerga06@users.noreply.github.com>"]
+authors = [
+    {name = "RBerga06", email = "78449715+RBerga06@users.noreply.github.com"},
+]
 readme = "README.md"
-packages = [{include = "rberga06", from = "src" }]
+license = {text = "AGPL-3.0-or-later"}
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "packaging>=23.1",
+    "pyyaml>=6.0",
+    "typing-extensions>=4.7.0",
+    # "sphinx[docs]>=7.0.1",
+    # "furo[docs]>=2023.5.20",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-# pydantic = {git = "https://github.com/pydantic/pydantic"}
-pydantic = {version = "^2.0b2", allow-prereleases = true}
-packaging = "^23.1"
-pyyaml = "^6.0"
-typing-extensions = {version = "^4.7.0rc1", allow-prereleases = true}
-sphinx = {version = "^7.0.1", extras = ["docs"]}
-furo = {version = "^2023.5.20", extras = ["docs"]}
 
-[tool.poetry.group.dev.dependencies]
-types-pyyaml = "^6.0.12.10"
-pytest = "^7.3.2"
-pytest-cov = "^4.1.0"
-pytest-mypy-testing = "^0.1.1"
-# pytest-benchmark = "^4.0.0"
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mypy-testing>=0.1.1",
+]
+docs = [
+    "sphinx>=7.2.2",
+    "furo>=2023.8.17",
+]
+
+[tool.pdm.build]
+includes = ["src/rberga06/"]
+package-dir = "src"
+source-includes = [
+    "*.typed",
+    "*.rst",
+    "docs/source/",
+    "docs/make.bat",
+    "docs/Makefile",
+]
+# run-setuptools = true
 
 
 [tool.pytest.ini_options]
@@ -53,11 +76,3 @@ plugins = [
 ]
 strict = true
 warn_unused_ignores = false
-
-
-[tool.pyright]
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

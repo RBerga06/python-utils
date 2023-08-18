@@ -20,19 +20,20 @@ jobs:
       fail-fast: false
       matrix:
         os: [ "ubuntu", "macos", "windows" ]
-        python: [ "3.11" ]  # python: [ "3.11", "3.12.0-alpha.7" ]
+        py: [ 3.11 ]  # python: [ "3.11", "3.12.0-alpha.7" ]
     runs-on: ${{matrix.os}}-latest
     steps:
     # Setup
     - uses: actions/checkout@v3
-    - name: Set up Python ${{matrix.python}}
-      uses: actions/setup-python@v3
+    - name: Setup PDM
+      uses: pdm-project/setup-pdm@v3
       with:
-        python-version: ${{matrix.python}}
-    - name: Install poetry
-      run: pip install poetry
-    - name: Editable install
-      run: poetry install --with=dev
+        python-version: ${{ matrix.py }}
+        architecture: x64
+        allow-python-prereleases: true
+        cache: true
+    - name: Install test dependencies & project in non-editable mode
+      run: pdm install --check --no-editable -xG test
     # Set environment variables
     - name: Env (FEAT_ALL)
       run: echo "FEAT_ALL=1" >> $GITHUB_ENV
@@ -51,7 +52,7 @@ jobs:
       if: contains(github.event.pull_request.labels.*.name, 'feat:other')
     # Test
     - name: Test
-      run: poetry run pytest
+      run: pdm run pytest
 
   # (Platform/Python)-indipendent build: run once (ubuntu, python 3.11)
   build:
