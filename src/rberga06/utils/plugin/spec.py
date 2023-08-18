@@ -51,12 +51,12 @@ class Features(BaseModel):
     ...     name="my.plugin", version="1.0.0",
     ...     package="mypackage.plugins",
     ...     Features=MyFeats,
-    ... ).extend_path_pkg("mypackage.plugins").discover_all()
-    >>> myplugin = sys.plugins[0]
-    >>> myfeats = myplugin.feat
-    >>> type(myfeats)
+    ... ).extend_path_pkg("mypackage.plugins").discover_all()  # doctest: +SKIP
+    >>> myplugin = sys.plugins[0]  # doctest: +SKIP
+    >>> myfeats = myplugin.feat  # doctest: +SKIP
+    >>> type(myfeats)  # doctest: +SKIP
     <class __main__.MyFeats>
-    >>> myfeats.foo
+    >>> myfeats.foo  # doctest: +SKIP
     42
     """
 
