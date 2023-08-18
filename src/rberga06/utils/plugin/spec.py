@@ -29,19 +29,36 @@ class Spec(BaseModel):
 
     @classmethod
     def read(cls, file: FilePath) -> Self:
-        """Read the info file at `root/.plugin.yml`."""
+        """Read the info file at ``root/.plugin.yml``."""
         data = yaml.load(file.read_text("utf-8"), yaml.SafeLoader)
         data["root"] = file.parent
         return cls.model_validate(data)
 
 
 class Features(BaseModel):
-    """Plugin runtime features."""
-    # To be subclassed by plugin systems.
+    """Plugin runtime features.
+
+    To be subclassed by plugin systems.
+
+    :Example:
+
+    >>> from rberga06.utils import plugin
+    >>>
+    >>> class MyFeats(plugin.Features):
+    ...     foo: int
+    ...
+    >>> sys = plugin.System(
+    ...     name="my.plugin", version="1.0.0",
+    ...     package="mypackage.plugins",
+    ...     Features=MyFeats,
+    ... ).extend_path_pkg("mypackage.plugins").discover_all()  # doctest: +SKIP
+    >>> myplugin = sys.plugins[0]  # doctest: +SKIP
+    >>> myfeats = myplugin.feat  # doctest: +SKIP
+    >>> type(myfeats)  # doctest: +SKIP
+    <class __main__.MyFeats>
+    >>> myfeats.foo  # doctest: +SKIP
+    42
+    """
 
 
-__all__ = [
-    "Info",
-    "Spec",
-    "Features",
-]
+__all__ = ["Info", "Spec", "Features"]

@@ -100,7 +100,7 @@ class dependency:
 
 
 class DepsEnum(dependency, Enum):
-    """dependency enum for `__about__`s"""
+    """Dependency enum for :py:class:`rberga06.utils.about.about` instances."""
 
     @classmethod
     def register(cls, about: "_about") -> None:
@@ -129,5 +129,5 @@ def requires(check: bool | Callable[[], bool | Any] | dependency, /, *, err: str
             ensure(check, err=err)
             __data__.set(False)
         return __decorated__(*args, **kwargs)
-    requires.__name__ = f"requires({check!r})"
+    requires.__name__ = f"requires({check!r})"  # type: ignore
     return requires

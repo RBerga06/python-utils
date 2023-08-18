@@ -15,9 +15,7 @@ _T = TypeVar("_T")
 _TT = TypeVarTuple("_TT")
 
 
-class access(Generic[_X]):
-    """Access specifiers."""
-
+class _access(Generic[_X]):
     _depth: int
     _ns: dict[str, Any] | None
 
@@ -27,13 +25,14 @@ class access(Generic[_X]):
 
     @property
     def _inc_depth(self, /) -> Self:
-        """Return a copy of `self` with `self._depth` incremented by 1."""
+        """Return a copy of :py:obj:`self` with :py:attr:`~._depth` incremented by 1."""
         other = type(self)(self._ns)
         other._depth = self._depth + 1
         return other
 
     @property
     def ns(self, /) -> dict[str, _X]:
+        """The attached namespace."""
         ns = self._ns
         if ns is not None:
             return ns
@@ -44,18 +43,79 @@ class access(Generic[_X]):
 
     @property
     def all(self, /) -> list[str]:
+        """The attached :py:obj:`__all__`."""
         ns: dict[str, Any]  = self._inc_depth.ns
         _all: Iterable[str] = ns.get("__all__", [])
         all = _all if isinstance(_all, list) else list(_all)
         ns["__all__"] = all
         return all
 
+
+@final
+class access(_access[_X]):
+    """
+    Access specifiers.
+
+    :param ns: The namespace in which to operate. Defaults to the caller's :py:func:`locals()`.
+
+    :Example:
+
+    >>> locals().clear()
+    >>> from rberga06.utils.access import *
+    >>> __all__
+    Traceback (most recent call last):
+    ...
+    NameError: name '__all__' is not defined
+    >>> a = access()
+    >>> @a.public
+    ... def _foo(x: int) -> int:
+    ...     return x
+    ...
+    >>> @a.private
+    ... def priv(y: str) -> str:
+    ...     return y
+    ...
+    >>> with a.public:
+    ...     _x: str = "public"
+    ...
+    >>> with a.private:
+    ...     y: int = 42
+    ...
+    >>> __all__  # it's now magically defined
+    ['_foo', '_x']
+    >>> __all__ is a.all
+    True
+
+    .. important::
+
+        When using the context manager syntax (for example, :py:obj:`with a.public:` blocks),
+        the :py:class:`access` instance only knows about new assignments.
+        This means you really should **not** re-assign variables
+        *in a* :py:obj:`with a.public:` *or* :py:obj:`with a.private:` *block*.
+        For example:
+
+        >>> # This is ok
+        >>> with a.public:
+        ...     x: int = 0
+        ...
+        >>> x = 42
+        >>>
+        >>> # This is not
+        >>> x: int = 0
+        >>> with a.public:
+        ...     x: int = 42
+        >>>
+
+    """
+
     @property
     def public(self) -> "public[_X]":
+        """Mark something public"""
         return self._specialized(public[_X])
 
     @property
     def private(self) -> "private[_X]":
+        """Mark something private"""
         return self._specialized(private[_X])
 
     def _specialized(self, cls: "type[_AS]") -> "_AS":
@@ -64,7 +124,7 @@ class access(Generic[_X]):
         return obj
 
 
-class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
+class _access_specialized(_access[_X], AbstractContextManager[dict[str, _X]]):
     @classmethod
     def _ns_special_key(cls, /) -> str:
         return f"<brs.utils.access:{cls.__name__}:namespace-backup-keys>"
@@ -77,11 +137,12 @@ class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
 
     @override
     def __exit__(self, typ: type[BaseException] | None, val: BaseException | None, tb: TracebackType | None, /) -> bool | None:
+        special_key = type(self)._ns_special_key()
         # Call `self.__call__(...)` on the added or removed keys
         ns: dict[str, Any] = self._inc_depth.ns
         new = set(ns.keys())
-        old = set(ns.pop(type(self)._ns_special_key(), ns))
-        for key in new - old:
+        old = set(ns.pop(special_key, ns))
+        for key in (new - old) - {special_key}:
             self._inc_depth(key)
         # Do not handle any exception
         return super().__exit__(typ, val, tb)
@@ -91,11 +152,10 @@ class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
     @overload
     def _operate(self, cb: Callable[[list[str], str], None], *objs: *_TT) -> tuple[*_TT]: ...
     def _operate(self, cb: Callable[[list[str], str], None], *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
-        ns  = self._inc_depth.ns
         all = self._inc_depth.all
         for obj in objs:
             name = getattr(obj, "__name__", obj if isinstance(obj, str) else None)
-            if name is not None and name in ns:
+            if name is not None:
                 cb(all, name)
         return objs[0] if len(objs) == 1 else objs
 
@@ -107,8 +167,54 @@ class _access_specialized(access[_X], AbstractContextManager[dict[str, _X]]):
         raise NotImplementedError(f"{type(self).__module__}:{type(self).__qualname__}.__call__(...)")
 
 
+_AS = TypeVar("_AS", bound=_access_specialized)
+
+
 @final
 class public(_access_specialized[_X]):
+    """
+    Mark something public.
+
+    :param ns: The namespace in which to operate. Defaults to the caller's `locals()`.
+
+    :Example:
+
+    >>> locals().clear()
+    >>> from rberga06.utils.access import *
+    >>> @public()
+    ... def _foo(x: int) -> int:
+    ...     return x
+    ...
+    >>> with public():
+    ...     x: str = "public"
+    ...     _y: str = "also public"
+    ...
+    >>> sorted(__all__)
+    ['_foo', '_y', 'x']
+    >>> __all__ is public().all
+    True
+
+    .. important::
+
+        When using the context manager syntax (aka :py:obj:`with public():` blocks),
+        the :py:class:`public` instance only knows about new assignments.
+        This means you really should **not** re-assign variables
+        *in a* :py:obj:`with public():` *block*.
+        For example:
+
+        >>> # This is ok
+        >>> with public():
+        ...     x: int = 0
+        ...
+        >>> x = 42
+        >>>
+        >>> # This is not
+        >>> x: int = 0
+        >>> with public():
+        ...     x: int = 42
+        >>>
+
+    """
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
     @overload
@@ -119,6 +225,49 @@ class public(_access_specialized[_X]):
 
 @final
 class private(_access_specialized[_X]):
+    """
+    Mark something private.
+
+    :param ns: The namespace in which to operate. Defaults to the caller's `locals()`.
+
+    :Example:
+
+    >>> locals().clear()
+    >>> from rberga06.utils.access import *
+    >>> @private()
+    ... def foo(x: int) -> int:
+    ...     return x
+    ...
+    >>> with private():
+    ...     _x: str = "private"
+    ...     y: str = "also private"
+    ...
+    >>> __all__
+    []
+    >>> __all__ is private().all
+    True
+
+    .. important::
+
+        When using the context manager syntax (aka :py:obj:`with private():` blocks),
+        the :py:class:`private` instance only knows about new assignments.
+        This means you really should **not** re-assign variables
+        *in a* :py:obj:`with private():` *block*.
+        For example:
+
+        >>> # This is ok
+        >>> with private():
+        ...     x: int = 0
+        ...
+        >>> x = 42
+        >>>
+        >>> # This is not
+        >>> x: int = 0
+        >>> with private():
+        ...     x: int = 42
+        >>>
+
+    """
     @overload
     def __call__(self, obj: _T, /) -> _T: ...
     @overload
@@ -127,9 +276,4 @@ class private(_access_specialized[_X]):
         return self._inc_depth._operate(lambda all, x: (all.remove(x) if x in all else None), *objs)
 
 
-_AS = TypeVar("_AS", bound=_access_specialized)
-
-
-public(globals())(
-    access, public, private
-)
+__all__ = ["access", "public", "private"]

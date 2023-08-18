@@ -58,7 +58,7 @@ class SigHelper(Generic[_F]):
     @overload
     def prepend(self: SigHelper[Fn[_P, _R]], *params: *tuple[type[_T1], type[_T2], type[_T3]]) -> SigHelper[Fn[Concat[_T1, _T2, _T3, _P], _R]]: ...
     def prepend(self: SigHelper[Fn[_P, _R]], *params: type[Any]) -> SigHelper[Fn[..., _R]]:
-        """Prepend *`params` to the function's signature."""
+        """Prepend :py:obj:`*params` to the function's signature."""
         sig = self._sig
         if self._runtime:
             ns = [int(s) for n in sig.parameters.keys() if n.startswith("__") and (s := n.removeprefix("__")).isdigit()]

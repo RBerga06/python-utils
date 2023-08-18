@@ -1,7 +1,7 @@
 {
     "files.readonlyInclude": {
         "./LICENSE": true,
-        "./poetry.lock": true,
+        "./pdm.lock": true,
         "./.venv/*": true,
     },
     "python.testing.pytestEnabled": true,
@@ -9,9 +9,9 @@
         "--no-cov"
     ],
     "python.analysis.typeCheckingMode": "strict",
-    "python.linting.mypyEnabled": true,
     "python.analysis.diagnosticSeverityOverrides": {
         "reportSelfClsParameterName": "none",
         "reportImplicitOverride": "warning",
     },
+    "esbonio.sphinx.confDir": "${workspaceFolder}/docs/source",
 }
