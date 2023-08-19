@@ -12,6 +12,8 @@ from typing_extensions import TypeVar, TypeVarTuple, override
 
 _X = TypeVar("_X", default=Any)
 _T = TypeVar("_T")
+_T1 = TypeVar("_T1")
+_T2 = TypeVar("_T2")
 _TT = TypeVarTuple("_TT")
 
 
@@ -141,17 +143,17 @@ class _access_specialized(_access[_X], AbstractContextManager[dict[str, _X]]):
         # Call `self.__call__(...)` on the added or removed keys
         ns: dict[str, Any] = self._inc_depth.ns
         new = set(ns.keys())
-        old = set(ns.pop(special_key, ns))
+        old = set[str](ns.pop(special_key, ns))
         for key in (new - old) - {special_key}:
             self._inc_depth(key)
         # Do not handle any exception
         return super().__exit__(typ, val, tb)
 
     @overload
-    def _operate(self, cb: Callable[[list[str], str], None], obj: _T, /) -> _T: ...
+    def _operate(self, cb: Callable[[list[str], str], None], *objs: *tuple[_T]) -> _T: ...
     @overload
-    def _operate(self, cb: Callable[[list[str], str], None], *objs: *_TT) -> tuple[*_TT]: ...
-    def _operate(self, cb: Callable[[list[str], str], None], *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
+    def _operate(self, cb: Callable[[list[str], str], None], *objs: *tuple[_T1, _T2, *_TT]) -> tuple[_T1, _T2, *_TT]: ...
+    def _operate(self, cb: Callable[[list[str], str], None], *objs: Any) -> Any | tuple[Any, ...]:
         all = self._inc_depth.all
         for obj in objs:
             name = getattr(obj, "__name__", obj if isinstance(obj, str) else None)
@@ -160,10 +162,10 @@ class _access_specialized(_access[_X], AbstractContextManager[dict[str, _X]]):
         return objs[0] if len(objs) == 1 else objs
 
     @overload
-    def __call__(self, obj: _T, /) -> _T: ...
+    def __call__(self, *objs: *tuple[_T]) -> _T: ...
     @overload
-    def __call__(self, *objs: *_TT) -> tuple[*_TT]: ...
-    def __call__(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:
+    def __call__(self, *objs: *tuple[_T1, _T2, *_TT]) -> tuple[_T1, _T2, *_TT]: ...
+    def __call__(self, *objs: Any) -> Any | tuple[Any, ...]:
         raise NotImplementedError(f"{type(self).__module__}:{type(self).__qualname__}.__call__(...)")
 
 
@@ -216,10 +218,11 @@ class public(_access_specialized[_X]):
 
     """
     @overload
-    def __call__(self, obj: _T, /) -> _T: ...
+    def __call__(self, *objs: *tuple[_T]) -> _T: ...
     @overload
-    def __call__(self, *objs: *_TT) -> tuple[*_TT]: ...
-    def __call__(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:  # type: ignore
+    def __call__(self, *objs: *tuple[_T1, _T2, *_TT]) -> tuple[_T1, _T2, *_TT]: ...
+    @override
+    def __call__(self, *objs: Any) -> Any | tuple[Any, ...]:  # type: ignore
         return self._inc_depth._operate(lambda all, x: (None if x in all else all.append(x)), *objs)
 
 
@@ -269,10 +272,11 @@ class private(_access_specialized[_X]):
 
     """
     @overload
-    def __call__(self, obj: _T, /) -> _T: ...
+    def __call__(self, *objs: *tuple[_T]) -> _T: ...
     @overload
-    def __call__(self, *objs: *_TT) -> tuple[*_TT]: ...
-    def __call__(self, *objs: *tuple[_T | Any, ...]) -> _T | tuple[Any, ...]:  # type: ignore
+    def __call__(self, *objs: *tuple[_T1, _T2, *_TT]) -> tuple[_T1, _T2, *_TT]: ...
+    @override
+    def __call__(self, *objs: Any) -> Any | tuple[Any, ...]:  # type: ignore
         return self._inc_depth._operate(lambda all, x: (all.remove(x) if x in all else None), *objs)
 
 
