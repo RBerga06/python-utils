@@ -4,3 +4,5 @@ from __future__ import annotations
 
 def hello(name: str = "World", /) -> str:
     return f"Hello, {name}!"
+
+__all__ = ["hello"]

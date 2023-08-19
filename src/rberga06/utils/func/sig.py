@@ -51,8 +51,12 @@ class SigHelper(Generic[_F]):
         """Set if this should be used on runtime."""
         return SigHelper(self._sig, runtime)
 
+    # --- Correct typing (requires Map[Foo, (T1, T2, T3, ...)] <=> (Foo[T1], Foo[T2], Foo[T3], ...)) ---
+    # def prepend[P, R, *Ts](self: SigHelper[Fn[P, R]], *params: *Map[type, Ts]) -> SigHelper[Fn[Concat[*Ts, P], R]]: ...
+    # --- Even better typing (requires Map & HKTs) ---
+    # def prepend[H[F]: SigHelper[F], **P, R, *Ts](self: H[Fn[P, R]], *params: *Map[type, Ts]) -> H[Fn[Concat[*Ts, P], R]]: ...
     @overload
-    def prepend(self: SigHelper[Fn[_P, _R]], param: type[_T1], /) -> SigHelper[Fn[Concat[_T1, _P], _R]]: ...
+    def prepend(self: SigHelper[Fn[_P, _R]], *params: *tuple[type[_T1]]) -> SigHelper[Fn[Concat[_T1, _P], _R]]: ...
     @overload
     def prepend(self: SigHelper[Fn[_P, _R]], *params: *tuple[type[_T1], type[_T2]]) -> SigHelper[Fn[Concat[_T1, _T2, _P], _R]]: ...
     @overload
@@ -70,7 +74,7 @@ class SigHelper(Generic[_F]):
                 ) for i, p in enumerate(params)],
                 *sig.parameters.values()
             ])
-        return SigHelper[Fn[Concat[_T, _P], _R]](sig, self._runtime)
+        return SigHelper[Fn[..., _R]](sig, self._runtime)
 
     def rmleading(self: SigHelper[Fn[Concat[Any, _P], _R]], /) -> SigHelper[Fn[_P, _R]]:
         sig = self._sig
