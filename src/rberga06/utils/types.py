@@ -287,10 +287,23 @@ class AttrFunc(Generic[_T]):
         return self.__wrapped__(item)
 
 
-_TT = TypeVar("_TT", bound=type[Any])
+def annotated(*metadata: object) -> Callable[[_T], _T]:
+    """
+    A decorator that sets 'Annotated' metadata for a type.
 
-def annotated(*metadata: Any) -> Callable[[_TT], _TT]:
-    def annotated(x: _TT) -> _TT:
+    :Example:
+
+    >>> @annotated(42, 69)
+    ... class Foo: pass
+    >>> Foo
+    typing.Annotated[rberga06.utils.types.Foo, 42, 69]
+    >>> from annotated_types import Gt
+    >>> positive = annotated(Gt(0))
+    >>> p_int = positive(int)
+    >>> p_int == Annotated[int, Gt(0)]
+    True
+    """
+    def annotated(x: _T, /) -> _T:
         return Annotated[x, *metadata]  # type: ignore
     return annotated
 
