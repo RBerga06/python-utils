@@ -4,7 +4,7 @@
 """Useful types."""
 from __future__ import annotations
 from collections.abc import Callable
-from typing import Generic, cast, final
+from typing import Annotated, Generic, cast, final
 from typing_extensions import Any, Literal, Protocol, Self, TypeVar, overload, override
 import weakref
 import packaging.version
@@ -287,9 +287,31 @@ class AttrFunc(Generic[_T]):
         return self.__wrapped__(item)
 
 
+def annotated(*metadata: object) -> Callable[[_T], _T]:
+    """
+    A decorator that sets 'Annotated' metadata for a type.
+
+    :Example:
+
+    >>> @annotated(42, 69)
+    ... class Foo: pass
+    >>> Foo
+    typing.Annotated[rberga06.utils.types.Foo, 42, 69]
+    >>> from annotated_types import Gt
+    >>> positive = annotated(Gt(0))
+    >>> p_int = positive(int)
+    >>> p_int == Annotated[int, Gt(0)]
+    True
+    """
+    def annotated(x: _T, /) -> _T:
+        return Annotated[x, *metadata]  # type: ignore
+    return annotated
+
+
 __all__ = [
     "SupportsPydanticV2",
     "Version",
     "Mut", "ref",
     "ItemFunc", "AttrFunc",
+    "annotated",
 ]
